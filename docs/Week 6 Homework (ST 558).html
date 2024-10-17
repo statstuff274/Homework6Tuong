@@ -1,0 +1,2274 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="John Tuong">
+
+<title>Week 6 - Conceptual Questions/Writing R Functions/API Query</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Week 6 - Conceptual Questions/Writing R Functions/API Query</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>John Tuong </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install and load packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("httr")</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("jsonlite")</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("purrr")</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="task-1-conceptual-questions" class="level2">
+<h2 class="anchored" data-anchor-id="task-1-conceptual-questions">Task 1: Conceptual Questions</h2>
+<section id="what-is-the-purpose-of-the-lapply-function-what-is-the-equivalent-purrr-function" class="level4">
+<h4 class="anchored" data-anchor-id="what-is-the-purpose-of-the-lapply-function-what-is-the-equivalent-purrr-function">1. What is the purpose of the lapply() function? What is the equivalent purrr function?</h4>
+<blockquote class="blockquote">
+<p>The purpose of the lapply() function is to apply a function over a list or vector, hence the “l” in lapply(), while returning a list of the same length where each element is a result from a function being applied to it. Notes - To further explain, apply() is to apply a function over something that’s homogenous, this is where the speed comes from. Help R states that lapply “returns a list of the same length as x, each element of which is the result of applying FUN to the corresponding element of x.”</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>The equivalent purrr function of lapply() is map(). Notes - the purrr package provides a tidyverse alternative to the apply() family. The main advantage here is more/greater consistency between functions and the addition of some helper functions. Hadley states that while using purrr, there’s less friction and greater ease while writing functional code.</p>
+</blockquote>
+</section>
+<section id="suppose-we-have-a-list-called-my_list.-each-element-of-the-list-is-a-numeric-data-frame-all-columns-are-numeric.-we-want-use-lapply-to-run-the-code-cornumeric_matrix-method-kendall-on-each-element-of-the-list.-write-code-to-do-this-below-im-really-trying-to-ask-you-how-you-specify-method-kendall-when-calling-lapply." class="level4">
+<h4 class="anchored" data-anchor-id="suppose-we-have-a-list-called-my_list.-each-element-of-the-list-is-a-numeric-data-frame-all-columns-are-numeric.-we-want-use-lapply-to-run-the-code-cornumeric_matrix-method-kendall-on-each-element-of-the-list.-write-code-to-do-this-below-im-really-trying-to-ask-you-how-you-specify-method-kendall-when-calling-lapply.">2. Suppose we have a list called my_list. Each element of the list is a numeric data frame (all columns are numeric). We want use lapply() to run the code cor(numeric_matrix, method = “kendall”) on each element of the list. Write code to do this below! (I’m really trying to ask you how you specify method = “kendall” when calling lapply()).</h4>
+<blockquote class="blockquote">
+<p>The code would be the following: lapply(my_list, FUN = function(x) cor(x, method = “kendall”)) Explanation: lapply() will apply a function over a list and return that list, my_list indicates the list, FUN = function(x) indicates that we’re going to create a function and pass its name to the FUN argument and cor(x, method = “kendall”) is how we would specify “kendell” when calling lapply().</p>
+</blockquote>
+</section>
+<section id="what-are-the-two-advantages-of-using-purrr-functions-instead-of-the-baser-apply-family" class="level4">
+<h4 class="anchored" data-anchor-id="what-are-the-two-advantages-of-using-purrr-functions-instead-of-the-baser-apply-family">3. What are the two advantages of using purrr functions instead of the BaseR apply family?</h4>
+<blockquote class="blockquote">
+<p>Two advantages of using purrr functions over the BaseR apply family is: one, the <em>purrr functions have helpers</em> for writing compact code for common special cases, and two, there is <em>much greater consistency between the functions</em>. An example for the second advantage is, lapply() and mapply() both come from the BaseR family, however, for lapply, the first argument is the data and for mapply() the first argument is the function… as for the map functions in purrr, the first argument is <em>always</em> the data.</p>
+</blockquote>
+</section>
+<section id="what-is-a-side-effect-function" class="level4">
+<h4 class="anchored" data-anchor-id="what-is-a-side-effect-function">4. What is a side-effect function?</h4>
+<blockquote class="blockquote">
+<p>A side-effect function (is like print, write_csv(), plot(), etc.) is a function where it doesn’t try to change the data but just tries to produce something. It changes the state of something. For example, print(), prints something to the console, write_csv is creating a new file somewhere, plot() is creating a plot output somewhere. It’s <strong>not</strong> transforming the data, it’s just trying to produce something different.</p>
+</blockquote>
+</section>
+<section id="why-can-you-name-a-variable-sd-in-a-function-and-not-cause-any-issues-with-the-sd-function" class="level4">
+<h4 class="anchored" data-anchor-id="why-can-you-name-a-variable-sd-in-a-function-and-not-cause-any-issues-with-the-sd-function">5. Why can you name a variable sd in a function and not cause any issues with the sd function?</h4>
+<blockquote class="blockquote">
+<p>This is because of the environments and lexical scoping, as well as how a function works. Lexical scoping (aka static scoping) refers to setting the scope/range of functionality, of a variable so that it can be called/referenced from within the block of code in which it’s defined… So, when you call a function, it creates temporary function environments (function scope). In these temporary function environments, variables in functions don’t overwite things. So even though you’re assigning a variable “sd” within a function, it doesn’t cause any issues with the actual sd function because it’s being assigned in a temporary function environment. This is why you can have the same name in a function and in your global environment, <em>your variable in your function won’t override the global function</em> making it not cause any issues with the sd function.</p>
+</blockquote>
+</section>
+</section>
+<section id="task-2-writing-r-functions" class="level2">
+<h2 class="anchored" data-anchor-id="task-2-writing-r-functions">Task 2: Writing R Functions</h2>
+<section id="write-a-basic-function-call-it-getrmse-that-takes-in-a-vector-of-responses-and-a-vector-of-predictions-and-outputs-the-rmse.-and-if-a-value-is-missing-allow-for-additional-arguments-to-the-mean-function-that-removes-the-na-values-in-the-computation." class="level4">
+<h4 class="anchored" data-anchor-id="write-a-basic-function-call-it-getrmse-that-takes-in-a-vector-of-responses-and-a-vector-of-predictions-and-outputs-the-rmse.-and-if-a-value-is-missing-allow-for-additional-arguments-to-the-mean-function-that-removes-the-na-values-in-the-computation.">1. Write a basic function (call it getRMSE()) that takes in a vector of responses and a vector of predictions and outputs the RMSE. AND if a value is missing, allow for additional arguments to the mean() function that removes the NA values in the computation.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating the getRSME function. Use resp and pred from #2 below. Ellipses must be passed down from arguments into the function, so this allowed for additional arguments to the mean() function.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>getRMSE <span class="ot">&lt;-</span> <span class="cf">function</span>(resp, pred,...) {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sqrt</span>(<span class="fu">mean</span>((resp <span class="sc">-</span> pred)<span class="sc">^</span><span class="dv">2</span>,...))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="run-the-code-given-below-and-test-rmse-function-using-this-data." class="level4">
+<h4 class="anchored" data-anchor-id="run-the-code-given-below-and-test-rmse-function-using-this-data.">2. Run the code (given below) and test RMSE function using this data.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Code ran and taken from HW 6 to create response values and predictions.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">10</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">runif</span>(n)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>resp <span class="ot">&lt;-</span> <span class="dv">3</span> <span class="sc">+</span> <span class="dv">10</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(<span class="fu">lm</span>(resp <span class="sc">~</span> x), <span class="fu">data.frame</span>(x))</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">#Test RMSE function here.</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>RSMEtest <span class="ot">&lt;-</span> <span class="fu">getRMSE</span>(resp, pred)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>RSMEtest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9581677</code></pre>
+</div>
+</div>
+<blockquote class="blockquote">
+<p>When testing the RMSE function, 0.958 is returned.</p>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Replacing two of the response values with missing values (NA_real_)... others include: NA, NA_integer_, NA_complex_, NA_character_, and NaN.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>resp[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Test RMSE function here to deal WITH missing values. Since we're using na.rm to deal with the missing values, a valid RMSE value will be returned. </span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>deal_with <span class="ot">&lt;-</span> <span class="fu">getRMSE</span>(resp, pred, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>deal_with</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9661699</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Test RMSE function here WITHOUT dealing with missing values; NA will be returned.</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>deal_without <span class="ot">&lt;-</span> <span class="fu">getRMSE</span>(resp, pred)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>deal_without</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NA</code></pre>
+</div>
+</div>
+</section>
+<section id="write-a-function-called-getmae-that-follows-the-specifications-of-the-getrmse-function." class="level4">
+<h4 class="anchored" data-anchor-id="write-a-function-called-getmae-that-follows-the-specifications-of-the-getrmse-function.">3. Write a function called getMAE() that follows the specifications of the getRMSE() function.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Wrote function getMAE, following specifications of getRMSE() function.</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>getMAE <span class="ot">&lt;-</span> <span class="cf">function</span>(resp, pred,...) {</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean</span>(<span class="fu">abs</span>(resp <span class="sc">-</span> pred),...)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="run-the-code-and-test-mae-function." class="level4">
+<h4 class="anchored" data-anchor-id="run-the-code-and-test-mae-function.">4. Run the code and test MAE function.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ran code from HW 6 to reset previous resp values.</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">10</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">runif</span>(n)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>resp <span class="ot">&lt;-</span> <span class="dv">3</span> <span class="sc">+</span> <span class="dv">10</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(<span class="fu">lm</span>(resp <span class="sc">~</span> x), <span class="fu">data.frame</span>(x))</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Testing MAE function.</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>MAEtest <span class="ot">&lt;-</span> <span class="fu">getMAE</span>(resp, pred)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>MAEtest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.8155776</code></pre>
+</div>
+</div>
+<blockquote class="blockquote">
+<p>When testing the MAE function, we get ~0.816</p>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Replacing two of the response values with missing values (NA_real_)..</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>resp[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Test RMSE function here to deal WITH missing values. Since we're using na.rm to deal with the missing values, a valid MAE value will be returned. </span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>deal_with_MAE <span class="ot">&lt;-</span> <span class="fu">getMAE</span>(resp, pred, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>deal_with_MAE</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.8241201</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Test RMSE function here WITHOUT dealing with missing values; NA will be returned.</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>deal_without_MAE <span class="ot">&lt;-</span> <span class="fu">getMAE</span>(resp, pred)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>deal_without_MAE</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NA</code></pre>
+</div>
+</div>
+</section>
+<section id="create-a-wrapper-function-that-can-be-used-to-get-either-or-both-metrics-returned-with-a-single-function-call." class="level4">
+<h4 class="anchored" data-anchor-id="create-a-wrapper-function-that-can-be-used-to-get-either-or-both-metrics-returned-with-a-single-function-call.">5. Create a wrapper function that can be used to get either or both metrics returned with a single function call.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating a wrapper function to return either or both metrics. Metrics is passed as a vector so it can be found as character strings and will return both metrics by default and include names. Function will also check if two numeric vectors have passed through. If not, then message will print. After the one or two vectors are confirmed, they will be initialized into a list. The respective "metric" will be calculated based on the functions we made earlier.</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>wrapped_metrics <span class="ot">&lt;-</span> <span class="cf">function</span>(resp, pred, <span class="at">metrics =</span> <span class="fu">c</span>(<span class="st">"RMSE"</span>, <span class="st">"MAE"</span>)) {</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(resp) <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.numeric</span>(pred) <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.atomic</span>(resp) <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.atomic</span>(pred)) {</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"Vector(s) are not valid. Please try again and ensure vector(s) are numeric."</span>)  </span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  results <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="st">"RMSE"</span> <span class="sc">%in%</span> metrics) {</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    results<span class="sc">$</span>RMSE <span class="ot">&lt;-</span> <span class="fu">getRMSE</span>(resp, pred, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="st">"MAE"</span> <span class="sc">%in%</span> metrics) {</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    results<span class="sc">$</span>MAE <span class="ot">&lt;-</span> <span class="fu">getMAE</span>(resp, pred, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(results)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>} </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="run-following-code-to-create-some-response-values-and-predictions." class="level5">
+<h5 class="anchored" data-anchor-id="run-following-code-to-create-some-response-values-and-predictions.">6. Run following code to create some response values and predictions.</h5>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reran code to start fresh.</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">10</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">runif</span>(n)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>resp <span class="ot">&lt;-</span> <span class="dv">3</span> <span class="sc">+</span> <span class="dv">10</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(<span class="fu">lm</span>(resp <span class="sc">~</span> x), <span class="fu">data.frame</span>(x))</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Testing new function.</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>wrappedtest <span class="ot">&lt;-</span> <span class="fu">wrapped_metrics</span>(resp, pred)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>wrappedtest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$RMSE
+[1] 0.9581677
+
+$MAE
+[1] 0.8155776</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calling for metric "RMSE"</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>wrappedtest_RMSE <span class="ot">&lt;-</span> <span class="fu">wrapped_metrics</span>(resp, pred, <span class="st">"RMSE"</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>wrappedtest_RMSE</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$RMSE
+[1] 0.9581677</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calling for metric "MAE"</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>wrappedtest_MAE <span class="ot">&lt;-</span> <span class="fu">wrapped_metrics</span>(resp, pred, <span class="st">"MAE"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>wrappedtest_MAE</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$MAE
+[1] 0.8155776</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calling for both metrics</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>wrappedtest_both <span class="ot">&lt;-</span> <span class="fu">wrapped_metrics</span>(resp, pred)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>wrappedtest_both</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$RMSE
+[1] 0.9581677
+
+$MAE
+[1] 0.8155776</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Repeat with replacing two response values with missing values.</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>resp[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="co"># With two missing values, you see that these values below are different from the values above.</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">wrapped_metrics</span>(resp,pred)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$RMSE
+[1] 0.9661699
+
+$MAE
+[1] 0.8241201</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Testing function with incorrect data. As seen below, once the function coerces the response vector to become a data frame, the function no longer took it because it wasn't numeric.</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="co"># incorrect_test &lt;- wrapped_metrics(data.frame(resp), pred)</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="co"># incorrect_test</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># I wanted to mention that I did try to pass incorrect code in the above function as you can see, and it did respond back: "Error in wrapped_metrics(data.frame(resp), pred): Vector(s) are not valid. Please try again and ensure vector(s) are numeric." However, when I rendered it, it kept halting execution from lines 193-197.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="task-3---querying-an-api-and-a-tidy-style-function" class="level2">
+<h2 class="anchored" data-anchor-id="task-3---querying-an-api-and-a-tidy-style-function">Task 3 - Querying an API and a Tidy-Style Function</h2>
+<section id="use-get-from-the-httr-package-to-return-info-about-a-topic.-then-parse-and-check-contents.-use-plunk-to-grab-articles-element.-first-column-should-be-a-list." class="level4">
+<h4 class="anchored" data-anchor-id="use-get-from-the-httr-package-to-return-info-about-a-topic.-then-parse-and-check-contents.-use-plunk-to-grab-articles-element.-first-column-should-be-a-list.">1/2. Use GET() from the httr package to return info about a topic. Then parse and check contents. Use plunk() to grab articles element. First column should be a list.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load packages</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(httr)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(jsonlite)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Signed up for and obtained API key: 305402c9d77b4538bf1312bc288e62a1</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co"># API call and parse about Apple</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>return_url <span class="ot">&lt;-</span> <span class="st">"https://newsapi.org/v2/everything?q=apple&amp;sortBy=popularity&amp;apiKey=305402c9d77b4538bf1312bc288e62a1"</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>initial_response <span class="ot">&lt;-</span> <span class="fu">GET</span>(<span class="at">url =</span> return_url)</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>initial_parse <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">rawToChar</span>(initial_response<span class="sc">$</span>content))</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Used pluck() to grab</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>first_article <span class="ot">&lt;-</span> <span class="fu">pluck</span>(initial_parse, <span class="st">"articles"</span>)</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>first_article</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    source.id         source.name
+1        &lt;NA&gt;           [Removed]
+2        &lt;NA&gt;           [Removed]
+3        &lt;NA&gt; Yahoo Entertainment
+4        &lt;NA&gt;           [Removed]
+5        &lt;NA&gt;           [Removed]
+6        &lt;NA&gt;           [Removed]
+7        &lt;NA&gt; Yahoo Entertainment
+8        &lt;NA&gt; Yahoo Entertainment
+9        &lt;NA&gt; Yahoo Entertainment
+10       &lt;NA&gt; Yahoo Entertainment
+11       &lt;NA&gt; Yahoo Entertainment
+12       &lt;NA&gt; Yahoo Entertainment
+13       &lt;NA&gt; Yahoo Entertainment
+14       &lt;NA&gt;           [Removed]
+15       &lt;NA&gt; Yahoo Entertainment
+16       &lt;NA&gt;           [Removed]
+17       &lt;NA&gt; Yahoo Entertainment
+18       &lt;NA&gt; Yahoo Entertainment
+19       &lt;NA&gt; Yahoo Entertainment
+20       &lt;NA&gt; Yahoo Entertainment
+21       &lt;NA&gt; Yahoo Entertainment
+22       &lt;NA&gt; Yahoo Entertainment
+23       &lt;NA&gt;           [Removed]
+24       &lt;NA&gt;           [Removed]
+25       &lt;NA&gt; Yahoo Entertainment
+26       &lt;NA&gt;           [Removed]
+27       &lt;NA&gt;           [Removed]
+28       &lt;NA&gt;           [Removed]
+29       &lt;NA&gt; Yahoo Entertainment
+30       &lt;NA&gt;           [Removed]
+31       &lt;NA&gt;           [Removed]
+32       &lt;NA&gt; Yahoo Entertainment
+33       &lt;NA&gt;           [Removed]
+34       &lt;NA&gt;           [Removed]
+35       &lt;NA&gt;           [Removed]
+36       &lt;NA&gt; Yahoo Entertainment
+37       &lt;NA&gt; Yahoo Entertainment
+38       &lt;NA&gt; Yahoo Entertainment
+39       &lt;NA&gt;           [Removed]
+40       &lt;NA&gt;           [Removed]
+41       &lt;NA&gt;           [Removed]
+42       &lt;NA&gt;           [Removed]
+43       &lt;NA&gt; Yahoo Entertainment
+44       &lt;NA&gt;           [Removed]
+45       &lt;NA&gt;           [Removed]
+46       &lt;NA&gt;           [Removed]
+47       &lt;NA&gt; Yahoo Entertainment
+48       &lt;NA&gt;           [Removed]
+49       &lt;NA&gt;           [Removed]
+50       &lt;NA&gt; Yahoo Entertainment
+51       &lt;NA&gt; Yahoo Entertainment
+52       &lt;NA&gt; Yahoo Entertainment
+53       &lt;NA&gt; Yahoo Entertainment
+54       &lt;NA&gt; Yahoo Entertainment
+55       &lt;NA&gt; Yahoo Entertainment
+56       &lt;NA&gt; Yahoo Entertainment
+57       &lt;NA&gt; Yahoo Entertainment
+58       &lt;NA&gt;           [Removed]
+59       &lt;NA&gt;           [Removed]
+60       &lt;NA&gt;           [Removed]
+61       &lt;NA&gt;           [Removed]
+62       &lt;NA&gt; Yahoo Entertainment
+63       &lt;NA&gt; Yahoo Entertainment
+64       &lt;NA&gt;           [Removed]
+65       &lt;NA&gt;           [Removed]
+66       &lt;NA&gt; Yahoo Entertainment
+67       &lt;NA&gt; Yahoo Entertainment
+68       &lt;NA&gt; Yahoo Entertainment
+69       &lt;NA&gt; Yahoo Entertainment
+70       &lt;NA&gt; Yahoo Entertainment
+71      wired               Wired
+72      wired               Wired
+73      wired               Wired
+74      wired               Wired
+75      wired               Wired
+76      wired               Wired
+77      wired               Wired
+78      wired               Wired
+79      wired               Wired
+80      wired               Wired
+81      wired               Wired
+82      wired               Wired
+83      wired               Wired
+84      wired               Wired
+85      wired               Wired
+86      wired               Wired
+87  the-verge           The Verge
+88  the-verge           The Verge
+89  the-verge           The Verge
+90  the-verge           The Verge
+91  the-verge           The Verge
+92  the-verge           The Verge
+93  the-verge           The Verge
+94  the-verge           The Verge
+95  the-verge           The Verge
+96  the-verge           The Verge
+97  the-verge           The Verge
+98  the-verge           The Verge
+99  the-verge           The Verge
+100 the-verge           The Verge
+                                             author
+1                                              &lt;NA&gt;
+2                                              &lt;NA&gt;
+3                                     Anna Washenko
+4                                              &lt;NA&gt;
+5                                              &lt;NA&gt;
+6                                              &lt;NA&gt;
+7                                      Pranav Dixit
+8                                      Katie Teague
+9                                      Katie Teague
+10                                  Danny Gallagher
+11                                    Anna Washenko
+12                                        Kris Holt
+13                                    Will Shanklin
+14                                             &lt;NA&gt;
+15                                Devindra Hardawar
+16                                             &lt;NA&gt;
+17                                   Sarah Fielding
+18                                       Jeremy Gan
+19                              Valentina Palladino
+20                                     Cherlynn Low
+21                               Cheyenne MacDonald
+22                                       Jeremy Gan
+23                                             &lt;NA&gt;
+24                                             &lt;NA&gt;
+25                              Valentina Palladino
+26                                             &lt;NA&gt;
+27                                             &lt;NA&gt;
+28                                             &lt;NA&gt;
+29                                    Will Shanklin
+30                                             &lt;NA&gt;
+31                                             &lt;NA&gt;
+32                                        Mat Smith
+33                                             &lt;NA&gt;
+34                                             &lt;NA&gt;
+35                                             &lt;NA&gt;
+36                                       Jeremy Gan
+37                                   Igor Bonifacic
+38                                        Mat Smith
+39                                             &lt;NA&gt;
+40                                             &lt;NA&gt;
+41                                             &lt;NA&gt;
+42                                             &lt;NA&gt;
+43                              Valentina Palladino
+44                                             &lt;NA&gt;
+45                                             &lt;NA&gt;
+46                                             &lt;NA&gt;
+47                              Valentina Palladino
+48                                             &lt;NA&gt;
+49                                             &lt;NA&gt;
+50                                    Mariella Moon
+51                                  Danny Gallagher
+52                                        Mat Smith
+53                                   Igor Bonifacic
+54                                   Sarah Fielding
+55                                  Danny Gallagher
+56                                    Lawrence Bonk
+57                                    Lawrence Bonk
+58                                             &lt;NA&gt;
+59                                             &lt;NA&gt;
+60                                             &lt;NA&gt;
+61                                             &lt;NA&gt;
+62                                        Aaron Kim
+63                 Sam Rutherford,Devindra Hardawar
+64                                             &lt;NA&gt;
+65                                             &lt;NA&gt;
+66                                        Aaron Kim
+67                                Devindra Hardawar
+68                                    Daniel Cooper
+69                                     Billy Steele
+70                                Devindra Hardawar
+71                                 Julian Chokkattu
+72                                 Julian Chokkattu
+73                                   Brenda Stolyar
+74                                      Parker Hall
+75                                 Julian Chokkattu
+76                                    Morgan Meaker
+77                                       Simon Hill
+78                            Simon Hill, Gear Team
+79  Andy Greenberg, Lily Hay Newman, Dhruv Mehrotra
+80                        Kyle Orland, Ars Technica
+81                                     Matt Burgess
+82                                 Julian Chokkattu
+83                     Lauren Goode, Michael Calore
+84                                   Sophie Charara
+85                                      Lavender Au
+86                                   Brenda Stolyar
+87                                        Wes Davis
+88                                       Jay Peters
+89                                        Wes Davis
+90                                    Victoria Song
+91                                  Jess Weatherbed
+92                                   Gaby Del Valle
+93                                       Jay Peters
+94                                       Jay Peters
+95                                        Wes Davis
+96                                        Wes Davis
+97                                  Jess Weatherbed
+98                                   Sean Hollister
+99                                 Quentyn Kennemer
+100                                       Emma Roth
+                                                                                                                         title
+1                                                                                                                    [Removed]
+2                                                                                                                    [Removed]
+3                                                     Apple Store employees in Oklahoma City ratify their first union contract
+4                                                                                                                    [Removed]
+5                                                                                                                    [Removed]
+6                                                                                                                    [Removed]
+7                                                          Apple halts iPadOS 18 update for M4 iPad Pro after bricking reports
+8           Apple has released iOS 18 to install but is your iPhone compatible? Here are the eligible devices and new features
+9   Apple's iOS 18 is available today, but your iPhone may not be compatible. All the eligible devices and new features coming
+10                                                            Apple TV will make three classic Peanuts specials free to stream
+11                                             The Apple Pencil Pro is 30 percent off, taking it down to an all-time low price
+12                                               Apple's 9th-gen iPad returns to an all-time low of $199 for October Prime Day
+13                                                                         watchOS 11 is out now, with new Sleep Apnea feature
+14                                                                                                                   [Removed]
+15                                                         Engadget Podcast: Reviewing the iPhone 16 and Apple Watch Series 10
+16                                                                                                                   [Removed]
+17                                                                   Oprah buys back her Apple TV+ documentary to lock it away
+18                                           Pebblebee’s new item trackers works with both Apple and Google 'Find My' networks
+19                                                   Prime Day Apple deals include the M2 MacBook Air for a record low of $749
+20                                                iPhone 16 Pro and Pro Max review: Apple focuses on cameras and customization
+21                                            See the iPhone 16’s game-changing battery removal process in new iFixit teardown
+22                                                                                                     iOS 18 is now available
+23                                                                                                                   [Removed]
+24                                                                                                                   [Removed]
+25                                               Prime Day deals drop Apple's AirPods Pro 2 to $169, an all-time low on Amazon
+26                                                                                                                   [Removed]
+27                                                                                                                   [Removed]
+28                                                                                                                   [Removed]
+29                                                                                  How to mirror your iPhone on macOS Sequoia
+30                                                                                                                   [Removed]
+31                                                                                                                   [Removed]
+32                                                                         The Morning After: Our verdict on the iPhone 16 Pro
+33                                                                                                                   [Removed]
+34                                                                                                                   [Removed]
+35                                                                                                                   [Removed]
+36                                                Epic is suing Google and Samsung for making it too hard to download Fortnite
+37                                       You'll soon be able to safely and easily move your passkeys between password managers
+38                                                              The Morning After: I really want this 30th anniversary PS5 Pro
+39                                                                                                                   [Removed]
+40                                                                                                                   [Removed]
+41                                                                                                                   [Removed]
+42                                                                                                                   [Removed]
+43                 Amazon Prime Day 2024: The best deals ahead of the October Big Deal Days sale and everything we know so far
+44                                                                                                                   [Removed]
+45                                                                                                                   [Removed]
+46                                                                                                                   [Removed]
+47                                                  The best early Amazon Prime Day deals to shop before October Big Deal Days
+48                                                                                                                   [Removed]
+49                                                                                                                   [Removed]
+50                                                                 Casetify's Evangelion collection returns for Evangelion Day
+51                                                                       New iOS update fixes microphone and password problems
+52                                                       The Morning After: The best deals we found on Amazon’s Prime Day 2024
+53                                                              Google Maps now lets you reserve a parking spot inside the app
+54                                                                         Shogun and The Bear win big for Disney at the Emmys
+55                                                                              OpenAI rakes in over $6 billion in new funding
+56                                                    EA's Grid Legends racing game careens onto iOS and Android this December
+57                                                      The third-gen Oura Ring is up to $100 off in this early Prime Day deal
+58                                                                                                                   [Removed]
+59                                                                                                                   [Removed]
+60                                                                                                                   [Removed]
+61                                                                                                                   [Removed]
+62                                                                                             How to stream via a VPN on Roku
+63                                                                                           The best Windows laptops for 2024
+64                                                                                                                   [Removed]
+65                                                                                                                   [Removed]
+66                                                                     How to stream via a VPN on your Google TV or Chromecast
+67                                                    Engadget Podcast: Why the Windows 11 2024 update is all about Copilot AI
+68                                                   reMarkable Paper Pro review: Writing in color is nice, but it'll cost you
+69                                                                                          The best wireless earbuds for 2024
+70                                                                                Meta Quest 3S review: Impressive VR for $300
+71                                                           Apple iPhone 16 Pro and iPhone 16 Pro Max Review: Smarter iPhones
+72                                                                      Apple iPhone 16 and iPhone 16 Plus Review: Why Go Pro?
+73                                                                                       18 Best Prime Day Laptop Deals (2024)
+74                                                                            Vizio 4K TV (2024) Review: A Simple TV for Cheap
+75                                                        The Best iPhone 16 Cases and Accessories (2024), Tested and Reviewed
+76                                                                                        Big Tech’s New Adversaries in Europe
+77                                                               23 Best Early Prime Day Deals on Products We’ve Tested (2024)
+78                                                    28 Best Early Amazon Prime Day Deals On Gear We've Tested (October 2024)
+79                                                          Iranian Hackers Tried to Give Hacked Trump Campaign Emails to Dems
+80                                                                       Apple Engineers Show How Flimsy AI ‘Reasoning’ Can Be
+81                                                                   Apple’s New Passwords App May Solve Your Login Nightmares
+82                                                         Google Is ‘Thinking Through’ How to Make the Pixel Watch Repairable
+83                                                                                             Why Threads Is All the Ragebait
+84                                                         An ‘iPhone of AI’ Makes No Sense. What Is Jony Ive Really Building?
+85                                               The Meteoric Rise of Temu and Pinduoduo—and What Might Finally Slow Them Down
+86                                                                                           26 Best Prime Day Deals Under $30
+87                                             The next iPhone SE may lose the home button, add Face ID and Apple Intelligence
+88                                                          You’ll be able to use an iPhone to wirelessly restore an iPhone 16
+89                                             HTC announces the Vive Focus Vision with color passthrough and an eye on gaming
+90                                                                              watchOS 11 puts a Dynamic Island on your wrist
+91                                                     Apple put on notice over support for third-party watches and headphones
+92                                                                                      Don’t ever hand your phone to the cops
+93                                                 Ticketmaster will start using Apple Wallet’s more useful tickets this month
+94                                              Figma’s AI-powered app generator is back after it was pulled for copying Apple
+95                                                                          Apple’s Vision Pro leader, Dan Riccio, is retiring
+96                                                                        With visionOS 2, Apple’s Vision Pro comes into focus
+97                                                          Setapp Mobile’s open beta adds more apps for European iPhone users
+98                                                                          Epic is suing Google — again — and now Samsung too
+99                                                         The Beats Pill speaker is even cheaper than it was during Prime Day
+100                            Mark Zuckerberg says there’s ‘no causal connection’ between social media and teen mental health
+                                                                                                                                                                                                                                                                  description
+1                                                                                                                                                                                                                                                                   [Removed]
+2                                                                                                                                                                                                                                                                   [Removed]
+3        Employees at an Apple Store in Oklahoma City's Penn Square Mall have voted to ratify their first collectively-bargained contract. The store's workers are part of the Communications Workers of America, operating as Apple Retail Union-CWA Local 6016. The employ…
+4                                                                                                                                                                                                                                                                   [Removed]
+5                                                                                                                                                                                                                                                                   [Removed]
+6                                                                                                                                                                                                                                                                   [Removed]
+7        Apple has temporarily paused the rollout of iPadOS 18 for M4 iPad Pro models, some of the most expensive iPads that the company sells, after some users complained that the update bricked their devices. Apple acknowledged the issue in a statement to Engadget, …
+8   Apple\r\nApple\r\n\nApple just released iOS 18 for all eligible iPhones to install now; you can find it in the Software Update settings. And if you're planning to buy one of the new iPhone 16 or iPhone 16 Pro models coming available on September 20, they'll alread…
+9   Apple\r\nApple\r\n\nApple just released its new iOS 18 for all eligible iPhones to download free today, which you can find in the Software Update settings. And if you're planning to buy one of the new iPhone 16 or iPhone 16 Pro models coming available on September…
+10       No Halloween, Thanksgiving or Christmas is complete without viewing one of the holiday adjacent Peanuts specials. These days, Apple TV owns the television rights to It’s the Great Pumpkin, Charlie Brown, A Charlie Brown Thanksgiving and A Charlie Brown Christ…
+11       Apple doesn't offer many discounts for its product lineup, so seeing one of its tablet accessories on sale for a third off the usual cost is exciting. The Apple Pencil Pro is available on Amazon for just $90, the lowest price we've seen for it. This is the mo…
+12       Prime Day is here and we've been busy rounding up the best deals we can find. There's an iPad offer in particular that matches one we've seen before, but it's definitely worth highlighting. The 9th-gen iPad has dropped back down to $199, which matches a recor…
+13      Over three months after Apple introduced it at WWDC 2024, watchOS 11 is officially here. The 2024 Apple Watch update, which adds the new Vitals app, widget improvements and sleep apnea detection, is now available to install on your smartwatch.\nApple’s sleep a…
+14                                                                                                                                                                                                                                                                  [Removed]
+15       Our reviews of the iPhone 16 Pro and Apple Watch Series 10 are up, thanks to one very tired Cherlynn Low. In this episode, Devindra and Cherlynn discuss her final thoughts on Apple's new hardware, including why the iPhone 16 Pro’s photo processing is particul…
+16                                                                                                                                                                                                                                                                  [Removed]
+17       A documentary on Oprah Winfrey is no longer coming to Apple TV+. Why, you might ask? Well, Winfrey, herself, bought back the rights to it, PageSix reports. Allegedly, Winfrey and filmmaker Kevin Macdonald clashed on the final product, with the latter not maki…
+18       Apple’s Find My network and Google’s Find My Device are both smart tracking solutions to help us prevent losing our items, but devices made for one aren’t typically compatible with the other. However, Pebblebee is changing this by introducing its Pebblebee Un…
+19       With October Prime Day approaching fast, we're seeing new deals drop in the final hours of the lead up. One of the latest deals is on the M2-powered MacBook Air laptop, which you can snag right now for $749. That's $250 off and a new record low on the machine…
+20       It may seem like Apple is behind the competition a lot of the time. The company appeared to be slow to developments like widgets, bezel-less displays with camera notches and screens with high refresh rates. And with the iPhone 16 Pro, it appears to once again…
+21     Apple introduced some major repairability improvements with the iPhone 16\r\n lineup, but nothing stands out as much as the new battery removal process for the base iPhone 16. Doing away with the usual pull tabs, Apple is using an adhesive that debonds in respo…
+22       As of now, iOS 18 is here. You can download and install it if your device is compatible, but it already comes with all iPhone 16, iPhone 16 Plus and iPhone 16 Pro models that will be available on September 20. Those with eligible devices can update them by go…
+23                                                                                                                                                                                                                                                                  [Removed]
+24                                                                                                                                                                                                                                                                  [Removed]
+25       Prime Day deals are here and you can grab Apple's AirPods Pro 2 for the best price we've seen. The October Prime Day sale has brought the wireless earbuds down to $169, which represents an $80 discount. Apple may not have fully revamped these buds back in Sep…
+26                                                                                                                                                                                                                                                                  [Removed]
+27                                                                                                                                                                                                                                                                  [Removed]
+28                                                                                                                                                                                                                                                                  [Removed]
+29       With macOS Sequoia and iOS 18, Apple has a handy new way to hop between devices while on desktop. iPhone Mirroring shows your phone’s screen on your computer; you can even use your mouse and keyboard to interact with it. Here’s how to set up and get the most …
+30                                                                                                                                                                                                                                                                  [Removed]
+31                                                                                                                                                                                                                                                                  [Removed]
+32       With the iPhone 16 Pro, the big announcements were the cameras and Apple Intelligence. The problem is Apple Intelligence isn’t quite here yet. We can test some features in the developer beta, but that’s not necessarily what we’ll get when the update rolls out…
+33                                                                                                                                                                                                                                                                  [Removed]
+34                                                                                                                                                                                                                                                                  [Removed]
+35                                                                                                                                                                                                                                                                  [Removed]
+36   Some users may know that Epic Games, the developer of Fortnite, has had its own app store for a while now, the Epic Games Store\r\n. The company also won an antitrust lawsuit\r\n against Google last December that found Google held an illegal monopoly on app distr…
+37       By now, most people know passkeys offer a better way to protect their online credentials than passwords. Nearly every tech company of note, including Apple, Google and Microsoft, supports the protocol. Moreover, despite a slow start, adoption has dramatically…
+38       To commemorate PlayStation’s 30 years in the game, Sony revealed some nostalgia-tinged redesigns of both the PS5 and the forthcoming PS5 Pro. With that classic gray colorway and the old-school logo, there’s a similarly styled DualSense controller and even a c…
+39                                                                                                                                                                                                                                                                  [Removed]
+40                                                                                                                                                                                                                                                                  [Removed]
+41                                                                                                                                                                                                                                                                  [Removed]
+42                                                                                                                                                                                                                                                                  [Removed]
+43      Amazon Prime Big Deal Days is back this year, returning on October 8 and 9. The “fall Prime Day” of sorts has served as the online retailer’s unofficial kickoff to the holiday shopping season for the past few years.\nWe expect most of the deals to be Prime exc…
+44                                                                                                                                                                                                                                                                  [Removed]
+45                                                                                                                                                                                                                                                                  [Removed]
+46                                                                                                                                                                                                                                                                  [Removed]
+47       Amazon Prime Big Deal Days is back this year, returning on October 8 and 9. The “fall Prime Day” of sorts has served as the online retailer’s unofficial kickoff to the holiday shopping season for the past few years. We expect most of the deals to be Prime exc…
+48                                                                                                                                                                                                                                                                  [Removed]
+49                                                                                                                                                                                                                                                                  [Removed]
+50       Casetify is bringing back the accessories based on Neon Genesis Evangelion&nbsp;that it originally launched in 2023, giving you another chance to grab one or two cases for your Apple devices. The crown jewel of the collection is perhaps the collectible case for th…
+51     There’s a new fix available for certain iPhones and iPads that addresses issues with recording and password security. Apple released two new patches including iOS 18.0.1 for iPhones and iPadOS 18.0.1, according to the support website\r\n. The update also finall…
+52       Didn’t we already have a Prime Day? Yes, but that was Amazon’s July Prime Day — this one is in October. While it typically doesn’t offer the same breadth of deals (or deep discounts) as the OG day, if you’ve been keeping your eye on a certain pair of AirPods,…
+53    Google is making it easier for drivers to find and reserve parking. Starting today, it’s possible to access SpotHero\r\n, a service that allows people to book parking spaces online, directly through Google Maps and Search.\nThe next time you use either app to fi…
+54       The second Emmys of 2024 have come and gone, with streamers once again winning big for some of our favorite television shows. Disney had a fantastic night, winning 60 awards across all its platforms, including Hulu and Disney+. Hulu's limited series Shogun le…
+55     Now that OpenAI is becoming a for-profit company, it’s making a tidy profit in the process. The Wall Street Journal\r\n reported that OpenAI has raised $6.6 billion in new funding from investors, nearly doubling its value to $157 billion. The new funding also m…
+56     The EA/Codemasters racing sim Grid Legends is coming to mobile this December, after first releasing for consoles and PC back in 2022\r\n. It’s actually a port of the deluxe edition of the game, which was originally released in 2023. This version includes all of…
+57       Amazon Prime Day is right around the corner, so the deals are already coming in hot. For instance, the Oura Ring is up to $100 off. The discount depends on which design you go for. The Stealth Horizon design is $350 in all sizes, while many standard colors ar…
+58                                                                                                                                                                                                                                                                  [Removed]
+59                                                                                                                                                                                                                                                                  [Removed]
+60                                                                                                                                                                                                                                                                  [Removed]
+61                                                                                                                                                                                                                                                                  [Removed]
+62       The Roku smart TV platform is an accessible way to watch your favorite streaming content in a centralized location – either built-in to TVs, or by adding affordable dongles or mini boxes, like the new-for-2024 Roku Ultra, to older televisions. One big advanta…
+63       Choosing the best Windows laptop can be overwhelming with the wealth of options available. And with Microsoft's recent announcements at Microsoft Build, we can expect lots of exciting things coming out in the next few months as more Copilot PCs become availab…
+64                                                                                                                                                                                                                                                                  [Removed]
+65                                                                                                                                                                                                                                                                  [Removed]
+66       Google TV is an easy to use operating system that provides access to all of the best streaming services in one centralized location. A growing number of modestly priced smart TVs have Google TV built-in. But even if your smart TV runs a different OS, you can …
+67       This week, Microsoft started rolling out the Windows 11 2024 update, but it quickly became clear that the company was far more eager to unveil new features for its Copilot AI and Copilot+ AI PCs. In this episode, Devindra and Cherlynn chat about Microsoft's c…
+68       It’s wild to think the reMarkable 2 debuted in March 2020, a time now more famous for other reasons. A lot has changed in the four-plus years since, and now it’s time for its successor, the reMarkable Paper Pro. The third-generation, distraction-free writing …
+69       While you could say the Bluetooth earbuds space is thriving, you could also say the amount of variety in the market can make it confusing to decide which pair will be the best Bluetooth earbuds for you. There are plenty of high-quality options out there, with…
+70       You can think of the $300 Meta Quest 3S as a basic Honda Accord of VR headsets. It doesn't have the same high-quality optics as the $500 Quest 3, which is more like a Touring-grade Honda for enthusiasts, but they both get you to the same place: Truly immersiv…
+71                                                                                                                                                                              Apple Intelligence might be overhyped, but it brings some helpful capabilities to the iPhone.
+72                                                                                                                                                          With beefy batteries and the A18 chipset, these colorful iPhones have everything you need and not much you don't.
+73                                                                                                       From MacBooks to Chromebooks to Copilot+ PCs, these are the best Prime Day laptop deals from brands we know and love. Amazon's Prime Big Deal Days end on October 9.
+74                                                                                                                                                                                              This no-frills screen is perfect for dorm rooms, bedrooms, or vacation homes.
+75                                                                                                                                                I've tested more than 70 cases for Apple's iPhone 16 range. These are the best cases, along with a few MagSafe accessories.
+76                                                                              For the past five years, Big Tech has faced a flurry of new rules and reprimands from Brussels. Now with a new team taking over the European Commission, relations may be entering a new era.
+77                                                                                                                          Amazon’s Prime Big Deal Days sale runs on October 8 and 9, but we’ve already spotted the best Prime Day deals on products we’ve tested and loved.
+78                                                                                                                                       Amazon’s Prime Big Deal Days starts tomorrow, but we’ve already spotted the best Prime Day deals on products we’ve tested and loved.
+79                                                                                       Plus: The FBI dismantles the largest-ever China-backed botnet, the DOJ charges two men with a $243 million crypto theft, Apple’s MacOS Sequoia breaks cybersecurity tools, and more.
+80                                                                                                   The new frontier in large language models is the ability to “reason” their way through problems. New research from Apple says it's not quite what it's cracked up to be.
+81                                                                                                                                                                     Apple is launching its first stand-alone password manager app in iOS 18. Here’s what you need to know.
+82                                                                                                                                          The current version of Google's smartwatch isn't repairable, but for the first time, the company is figuring out how to fix that.
+83                                                                                                                       This week, we talk about engagement bait on Threads, and why the social network is prioritizing posts that ask infuriating questions and stir drama.
+84                                                                                                            LoveFrom is working with OpenAI to build AI devices that are less “socially disruptive” than the iPhone. Is Ive looking for absolution or a new computing soul?
+85                                                                                   The retail apps have exploded in China and internationally thanks to bargain-basement pricing. But a potential import crackdown from the US and other countries could slow the momentum.
+86                                                                                                                                                                                           We found these great last-minute discounts that won't put a dent in your wallet.
+87                                                                                                                    Apple is rumored to be readying the next iPhone SE, complete with Face ID and Apple Intelligence, for manufacturing ahead of a release early next year.
+88                                                                                          iOS 18 lets you wirelessly restore an iPhone 16 or iPhone 16 Pro using another iPhone or an iPad, according to 9to5Mac. Apple offers a similar feature to restore an Apple Watch.
+89                                                                                                                             HTC’s Vive Focus Vision mixes some of the features of the Apple Vision Pro with more traditional headsets, but at a much more appealing price.
+90                                                                                                                        It may not get Apple Intelligence, but watchOS 11 brings a more contextual Smart Stack, Live Activities, and a revamped Photos watchface algorithm.
+91                                                                                               The European Union has opened new proceedings under the Digital Markets Act (DMA) that will see the bloc instruct how Apple can comply with its interoperability obligations
+92                                                                                               California and other states are using systems like Apple Wallet for digital IDs, but interacting with police is one case where an old-fashioned driver’s license works best.
+93                                                     Ticketmaster announced that it will be the first ticketing company to use Apple’s upgraded Apple Wallet tickets for iOS 18. The first event to use the tickets will be an October 19th Los Angeles Football Club game.
+94                                                                                                    Figma’s AI tool to help you make designs is back. After Make Designs was pulled for creating weather app lookalikes, First Draft is here for “looser” idea exploration.
+95                                                                                                                 Dan Riccio, who heads the Vision Pro and oversaw much of Apple’s popular new hardware from 2012 to 2021, is reportedly retiring this month after 26 years.
+96                                                                                                                                The Vision Pro gets its biggest software update yet, bringing along big improvements to gestures, immersive spaces, and the web experience.
+97                                                                                                              The Setapp Mobile alternative iOS app marketplace is now available in open beta for iPhone users in the EU, featuring 50 productivity-focused apps at launch.
+98                                                                                Fortnite maker Epic Games has now filed a second antitrust lawsuit against Google, and now additionally Samsung, accusing them of illegally conspiring to undermine third-party app stores.
+99                                                                                               The Beats Pill Bluetooth speaker is $1 cheaper than its all-time low Prime Day price. Plus, you a Fire TV Stick 4K Max Game Pass bundle and AirPods Max are at their lowest.
+100                                                                                         In an interview with The Verge, Meta CEO Mark Zuckerberg says that existing research shows there isn’t a causal connection linking social media platforms and teen mental health.
+                                                                                                                     url
+1                                                                                                    https://removed.com
+2                                                                                                    https://removed.com
+3                https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_cb6d4d72-cacb-4fbb-801e-23b7fbc87605
+4                                                                                                    https://removed.com
+5                                                                                                    https://removed.com
+6                                                                                                    https://removed.com
+7                https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_48d53b93-a0ee-4c48-8aac-48a5939bc11a
+8                https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_cb384483-a0c0-4b42-b31f-c126a79169f7
+9                https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_8089c568-dc85-4cc4-86c0-fbe98dac8620
+10               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_58fcd305-1816-406c-b5ce-4b9c8f297b02
+11               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_2711bbdf-0325-4496-a71b-8ef9816078e3
+12               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_bcc66f34-03a5-480d-96c1-25b265eef0af
+13               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_649e003f-1b11-4964-9c0f-91d1149d55eb
+14                                                                                                   https://removed.com
+15               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_e220557a-1102-4bfc-82b1-a65646795d47
+16                                                                                                   https://removed.com
+17               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_dcc5640b-d89e-4a85-91ec-8715a629adab
+18               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_3e1afc53-6f7b-45a5-a69c-9ee5acd00fdf
+19               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_cea3694a-9514-4e54-8aba-447747ac166a
+20               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_2b967b17-0c48-4078-aa0f-aaf3949a58ea
+21               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_9cefa1eb-59aa-4124-b11c-c5788f122694
+22               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_e2aef34a-bf37-46f5-b671-8f4faf52343b
+23                                                                                                   https://removed.com
+24                                                                                                   https://removed.com
+25               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_35a9cbac-bed3-4cc5-bdf5-5915309a34e9
+26                                                                                                   https://removed.com
+27                                                                                                   https://removed.com
+28                                                                                                   https://removed.com
+29               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_e4484758-584a-4a55-a979-186a0063eb70
+30                                                                                                   https://removed.com
+31                                                                                                   https://removed.com
+32               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_96dd0644-68cd-4f1b-8bb6-3217d59c67c3
+33                                                                                                   https://removed.com
+34                                                                                                   https://removed.com
+35                                                                                                   https://removed.com
+36               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_767bfeaf-186b-498c-af7a-717744a0b3bd
+37               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_c9430024-036e-4c1e-8e93-fb6ae347f946
+38               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_a42fe879-3726-4d76-8106-dd91c939efa2
+39                                                                                                   https://removed.com
+40                                                                                                   https://removed.com
+41                                                                                                   https://removed.com
+42                                                                                                   https://removed.com
+43               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_ba363641-e4e6-4e7d-9247-8793a3aff346
+44                                                                                                   https://removed.com
+45                                                                                                   https://removed.com
+46                                                                                                   https://removed.com
+47               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_ddd2b4b7-13e0-4387-b32d-e25f5dabcb5b
+48                                                                                                   https://removed.com
+49                                                                                                   https://removed.com
+50               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_15bfcc87-7ba1-45d8-8faa-98040f1c0d1c
+51               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_6cc27bc4-5841-4ebe-8c35-8605d3f55825
+52               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_8d69e71e-52ff-4a51-8aea-df5f6a46c275
+53               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_28df489a-a9e9-483e-941a-bdfe78ac411e
+54               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_dc4dacf5-5e19-435d-b187-b85e5e7f12b8
+55               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_ae113eb3-b7a2-4396-8423-0c590ec338d2
+56               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_c039ef0c-88c0-4960-bdb5-b315b97fdeed
+57               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_42643582-3182-4984-bec6-3aac406fa1dc
+58                                                                                                   https://removed.com
+59                                                                                                   https://removed.com
+60                                                                                                   https://removed.com
+61                                                                                                   https://removed.com
+62               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_b37b1ce2-8106-40b4-9b94-03e4500791fe
+63               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_d2b79e8d-3627-4242-9425-923ec2b27cf8
+64                                                                                                   https://removed.com
+65                                                                                                   https://removed.com
+66               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_6aeefa08-e655-4016-a2cf-4360e5a35559
+67               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_b3f2584d-3430-48b1-bf75-c4348f20d394
+68               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_846468e4-db82-40f1-93e7-0b34249cd887
+69               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_4967f0e8-80a5-43e1-b819-f27ae858ae37
+70               https://consent.yahoo.com/v2/collectConsent?sessionId=1_cc-session_d6bba245-c025-4d52-88b5-12aa6fdc79c9
+71                                               https://www.wired.com/review/apple-iphone-16-pro-and-iphone-16-pro-max/
+72                                                      https://www.wired.com/review/apple-iphone-16-and-iphone-16-plus/
+73                                               https://www.wired.com/story/best-prime-day-laptop-deals-october-2024-1/
+74                                                                        https://www.wired.com/review/vizio-4k-tv-2024/
+75                                                   https://www.wired.com/gallery/best-iphone-16-cases-and-accessories/
+76                                                      https://www.wired.com/story/big-techs-new-adversaries-in-europe/
+77                                                  https://www.wired.com/story/best-early-prime-day-deals-october-2024/
+78                                                https://www.wired.com/story/best-early-prime-day-deals-october-2024-1/
+79                                                      https://www.wired.com/story/iran-hackers-trump-democrats-emails/
+80                                                          https://www.wired.com/story/apple-ai-llm-reasoning-research/
+81                                                                https://www.wired.com/story/apple-password-app-ios-18/
+82                      https://www.wired.com/story/google-is-thinking-through-the-pixel-watchs-design-to-be-repairable/
+83                                                                   https://www.wired.com/story/gadget-lab-podcast-659/
+84                                                                    https://www.wired.com/story/jony-ive-iphone-of-ai/
+85                                         https://www.wired.com/story/temu-pinduoduo-retail-us-china-imports-crackdown/
+86                                            https://www.wired.com/story/26-best-prime-day-deals-under-30-october-2024/
+87                       https://www.theverge.com/2024/10/1/24259713/iphone-se-face-id-apple-intelligence-no-home-button
+88                                      https://www.theverge.com/2024/9/17/24247702/apple-iphone-16-pro-wireless-restore
+89  https://www.theverge.com/2024/9/18/24248052/htc-vive-focus-vision-vr-headset-eye-tracking-color-passthrough-preorder
+90                                        https://www.theverge.com/2024/9/25/24253366/watch-os-11-apple-watch-smartwatch
+91          https://www.theverge.com/2024/9/20/24249738/eu-dma-apple-ios-iphone-interoperability-smartwatches-headphones
+92                      https://www.theverge.com/2024/9/24/24252235/police-unlock-phone-password-face-id-apple-wallet-id
+93                                    https://www.theverge.com/2024/10/10/24267269/ticketmaster-apple-wallet-new-tickets
+94                        https://www.theverge.com/2024/9/24/24253252/figma-ai-make-designs-first-draft-app-ui-generator
+95                                                 https://www.theverge.com/2024/10/9/24266321/apple-dan-riccio-retiring
+96          https://www.theverge.com/2024/9/18/24246461/apple-visionos-2-vision-pro-impressions-features-virtual-reality
+97                      https://www.theverge.com/2024/9/17/24243950/setapp-mobile-alternative-ios-app-store-eu-open-beta
+98                    https://www.theverge.com/policy/2024/9/30/24256395/epic-sues-google-samsung-antitrust-auto-blocker
+99          https://www.theverge.com/2024/10/11/24267717/beats-pill-speaker-amazon-fire-tv-stick-4k-max-bundle-deal-sale
+100                     https://www.theverge.com/2024/9/25/24254044/mark-zuckerberg-meta-social-media-teen-mental-health
+                                                                                                                                                                                                                                            urlToImage
+1                                                                                                                                                                                                                                                 &lt;NA&gt;
+2                                                                                                                                                                                                                                                 &lt;NA&gt;
+3                                                                                                                                                                                                                                                 &lt;NA&gt;
+4                                                                                                                                                                                                                                                 &lt;NA&gt;
+5                                                                                                                                                                                                                                                 &lt;NA&gt;
+6                                                                                                                                                                                                                                                 &lt;NA&gt;
+7                                                                                                                                                                                                                                                 &lt;NA&gt;
+8                                                                                                                                                                                                                                                 &lt;NA&gt;
+9                                                                                                                                                                                                                                                 &lt;NA&gt;
+10                                                                                                                                                                                                                                                &lt;NA&gt;
+11                                                                                                                                                                                                                                                &lt;NA&gt;
+12                                                                                                                                                                                                                                                &lt;NA&gt;
+13                                                                                                                                                                                                                                                &lt;NA&gt;
+14                                                                                                                                                                                                                                                &lt;NA&gt;
+15                                                                                                                                                                                                                                                &lt;NA&gt;
+16                                                                                                                                                                                                                                                &lt;NA&gt;
+17                                                                                                                                                                                                                                                &lt;NA&gt;
+18                                                                                                                                                                                                                                                &lt;NA&gt;
+19                                                                                                                                                                                                                                                &lt;NA&gt;
+20                                                                                                                                                                                                                                                &lt;NA&gt;
+21                                                                                                                                                                                                                                                &lt;NA&gt;
+22                                                                                                                                                                                                                                                &lt;NA&gt;
+23                                                                                                                                                                                                                                                &lt;NA&gt;
+24                                                                                                                                                                                                                                                &lt;NA&gt;
+25                                                                                                                                                                                                                                                &lt;NA&gt;
+26                                                                                                                                                                                                                                                &lt;NA&gt;
+27                                                                                                                                                                                                                                                &lt;NA&gt;
+28                                                                                                                                                                                                                                                &lt;NA&gt;
+29                                                                                                                                                                                                                                                &lt;NA&gt;
+30                                                                                                                                                                                                                                                &lt;NA&gt;
+31                                                                                                                                                                                                                                                &lt;NA&gt;
+32                                                                                                                                                                                                                                                &lt;NA&gt;
+33                                                                                                                                                                                                                                                &lt;NA&gt;
+34                                                                                                                                                                                                                                                &lt;NA&gt;
+35                                                                                                                                                                                                                                                &lt;NA&gt;
+36                                                                                                                                                                                                                                                &lt;NA&gt;
+37                                                                                                                                                                                                                                                &lt;NA&gt;
+38                                                                                                                                                                                                                                                &lt;NA&gt;
+39                                                                                                                                                                                                                                                &lt;NA&gt;
+40                                                                                                                                                                                                                                                &lt;NA&gt;
+41                                                                                                                                                                                                                                                &lt;NA&gt;
+42                                                                                                                                                                                                                                                &lt;NA&gt;
+43                                                                                                                                                                                                                                                &lt;NA&gt;
+44                                                                                                                                                                                                                                                &lt;NA&gt;
+45                                                                                                                                                                                                                                                &lt;NA&gt;
+46                                                                                                                                                                                                                                                &lt;NA&gt;
+47                                                                                                                                                                                                                                                &lt;NA&gt;
+48                                                                                                                                                                                                                                                &lt;NA&gt;
+49                                                                                                                                                                                                                                                &lt;NA&gt;
+50                                                                                                                                                                                                                                                &lt;NA&gt;
+51                                                                                                                                                                                                                                                &lt;NA&gt;
+52                                                                                                                                                                                                                                                &lt;NA&gt;
+53                                                                                                                                                                                                                                                &lt;NA&gt;
+54                                                                                                                                                                                                                                                &lt;NA&gt;
+55                                                                                                                                                                                                                                                &lt;NA&gt;
+56                                                                                                                                                                                                                                                &lt;NA&gt;
+57                                                                                                                                                                                                                                                &lt;NA&gt;
+58                                                                                                                                                                                                                                                &lt;NA&gt;
+59                                                                                                                                                                                                                                                &lt;NA&gt;
+60                                                                                                                                                                                                                                                &lt;NA&gt;
+61                                                                                                                                                                                                                                                &lt;NA&gt;
+62                                                                                                                                                                                                                                                &lt;NA&gt;
+63                                                                                                                                                                                                                                                &lt;NA&gt;
+64                                                                                                                                                                                                                                                &lt;NA&gt;
+65                                                                                                                                                                                                                                                &lt;NA&gt;
+66                                                                                                                                                                                                                                                &lt;NA&gt;
+67                                                                                                                                                                                                                                                &lt;NA&gt;
+68                                                                                                                                                                                                                                                &lt;NA&gt;
+69                                                                                                                                                                                                                                                &lt;NA&gt;
+70                                                                                                                                                                                                                                                &lt;NA&gt;
+71                                                                            https://media.wired.com/photos/66ea5dcc6a7af0657c5dbd87/191:100/w_1280,c_limit/Apple%20iPhone%2016%20Pro%20Reviewer%20Collage%20092024%20SOURCE%20Julian%20Chokkattu.jpg
+72                                                                             https://media.wired.com/photos/66f1a318d824ec455574fb0f/191:100/w_1280,c_limit/Apple-iPhone-16-and-iPhone-16-Plus-Reviewer-Collage-2-092024-SOURCE-Julian-Chokkattu.jpg
+73                                                                                           https://media.wired.com/photos/67030e284e9413875879f0e2/191:100/w_1280,c_limit/Best-Prime-Day-Laptop-Deals-102024-Custom-APD-Background-SOURCE-Amazon.jpg
+74                                                                                                    https://media.wired.com/photos/66f5c74fecda990a7dd33a93/191:100/w_1280,c_limit/Vizio-4K-TV-(2024)-Reviewer-Collage-092024-SOURCE-Parker-Hall.jpg
+75                                                                                            https://media.wired.com/photos/66edd86da56dfa76c5fc7173/191:100/w_2580,c_limit/Apple-iPhone-16-Cases-Reviewer-Collage-092024-SOURCE-Julian-Chokkattu.jpg
+76                                                                                                                                        https://media.wired.com/photos/66ec8fe2c9d79523c5f2a013/191:100/w_1280,c_limit/Tech-Adversaries-Business.jpg
+77                                                                                                                                                            https://media.wired.com/photos/66f6d6866cae523af3a5c0a9/191:100/w_1280,c_limit/AW5.2.JPG
+78                                                                                                                                                            https://media.wired.com/photos/66f6d6866cae523af3a5c0a9/191:100/w_1280,c_limit/AW5.2.JPG
+79                                                                                                                                           https://media.wired.com/photos/66ed82cf42ad37094e1a41eb/191:100/w_1280,c_limit/GettyImages-2172740225.jpg
+80                                                                                                                                               https://media.wired.com/photos/670eb29ca88ac76b34d258c1/191:100/w_1280,c_limit/apple-llm-fail-biz.jpg
+81                                                                                                           https://media.wired.com/photos/66e35f14e7fd2f784bb46ecc/191:100/w_1280,c_limit/Security_Apple_Password_Manager_GettyImages-1618511059.jpg
+82                                                                                                                                          https://media.wired.com/photos/66f318f76c8f08731ecd9f35/191:100/w_1280,c_limit/google-watch-2171744304.jpg
+83                                                                                                                              https://media.wired.com/photos/66eb27d22fe6c23e8a9446da/191:100/w_1280,c_limit/091824-gadget-lab-threads-rage-bait.jpg
+84                                                                                                                                   https://media.wired.com/photos/66f6d940bf343e435b352d6c/191:100/w_1280,c_limit/jony-ive-gear-AP22307130112686.jpg
+85                                                                                                                       https://media.wired.com/photos/66f5da1f85635c4f46a92b13/191:100/w_1280,c_limit/Pinduoduo-Fast-Fashion-Business-2168040923.jpg
+86                                                                                         https://media.wired.com/photos/6706e52df3401c24528028f1/191:100/w_1280,c_limit/Best-Prime-Day-Deals-Under-30-102024-Custom-APD-Background-SOURCE-Amazon.jpg
+87                               https://cdn.vox-cdn.com/thumbor/MbjCZjLVIYqaZv9ECL97xwJ_b4w=/0x0:2040x1360/1200x628/filters:focal(1020x680:1021x681)/cdn.vox-cdn.com/uploads/chorus_asset/file/24020915/226270_IPHONE_14_REGULAR_PHO_akrales_0657.jpg
+88                                                              https://cdn.vox-cdn.com/thumbor/yZTBQs9CyYfXwNgDdV_lo2rydSI=/0x0:3008x2000/1200x628/filters:focal(1504x1000:1505x1001)/cdn.vox-cdn.com/uploads/chorus_asset/file/25612871/DSC08308.JPG
+89                                             https://cdn.vox-cdn.com/thumbor/AQ-sPVnOa6WrLEEkDm4H08_GoLU=/0x0:3595x2571/1200x628/filters:focal(1798x1286:1799x1287)/cdn.vox-cdn.com/uploads/chorus_asset/file/25628115/Vive_Focus_Vision_closeup.png
+90                             https://cdn.vox-cdn.com/thumbor/wstfsrofvl63X0j3i47OjHD6ivc=/0x0:2700x1800/1200x628/filters:focal(1372x1006:1373x1007)/cdn.vox-cdn.com/uploads/chorus_asset/file/25623065/247270_Apple_watch_series_10_AKrales_0370.jpg
+91                                                             https://cdn.vox-cdn.com/thumbor/Pp39FAgmMqaYIxBPWM7rEzRD0nM=/0x0:2040x1334/1200x628/filters:focal(1020x667:1021x668)/cdn.vox-cdn.com/uploads/chorus_asset/file/25336519/STK450_EU_G.jpg
+92                                            https://cdn.vox-cdn.com/thumbor/JQ-69rEHKlfdcT_xDAOTzcONsDg=/0x0:2040x1360/1200x628/filters:focal(1020x680:1021x681)/cdn.vox-cdn.com/uploads/chorus_asset/file/25532311/STK478_breaking_into_phone_B.jpg
+93                                        https://cdn.vox-cdn.com/thumbor/ogn1mVbYQv9S5xK9iYeuplQo7Es=/0x0:2048x1150/1200x628/filters:focal(1024x575:1025x576)/cdn.vox-cdn.com/uploads/chorus_asset/file/25670129/Apple_Wallet_B2B_Blog_Header_204.jpg
+94                                                       https://cdn.vox-cdn.com/thumbor/SUZadZe08y22DV7a9s7aadHMn_A=/110x55:1116x710/1200x628/filters:focal(601x468:602x469)/cdn.vox-cdn.com/uploads/chorus_asset/file/25638097/first_draft_figma.jpg
+95  https://cdn.vox-cdn.com/thumbor/Ed7T1NHwsYw7ALRGvqF9Z9pWj74=/0x0:1960x1362/1200x628/filters:focal(980x681:981x682)/cdn.vox-cdn.com/uploads/chorus_asset/file/22259288/Apple_dan_riccio_begins_a_new_chapter_at_apple_01252020_big.jpg.large_2x.jpg
+96                                                          https://cdn.vox-cdn.com/thumbor/MMPCEzDR16TKkKbD5JK4PQe1dOo=/594x629:4814x3291/1200x628/filters:focal(2784x1856:2785x1857)/cdn.vox-cdn.com/uploads/chorus_asset/file/24704602/DSC_0909.jpg
+97                                            https://cdn.vox-cdn.com/thumbor/yp7AIEGWC_9j8P-zBTbaUbmLULQ=/85x70:2429x1536/1200x628/filters:focal(1270x800:1271x801)/cdn.vox-cdn.com/uploads/chorus_asset/file/25619505/Setapp_Mobile_Focused_Work.png
+98                                        https://cdn.vox-cdn.com/thumbor/XqVvq_NIW5O3f9eYz9GU7QZO-KY=/0x0:2040x1360/1200x628/filters:focal(913x528:914x529)/cdn.vox-cdn.com/uploads/chorus_asset/file/25157482/236883_Epic_Vs_Google_10_CVirginia.jpg
+99                                                                https://cdn.vox-cdn.com/thumbor/M8ZJfaPzycWL4QWZPUi05OHaysw=/0x0:2040x1360/1200x628/filters:focal(1020x680:1021x681)/cdn.vox-cdn.com/uploads/chorus_asset/file/25504388/DSCF7829.jpg
+100                                     https://cdn.vox-cdn.com/thumbor/jBhI2bYaCwEvTxqXmTUjkW9fV1M=/0x0:2040x1360/1200x628/filters:focal(1020x680:1021x681)/cdn.vox-cdn.com/uploads/chorus_asset/file/25546251/STK169_Mark_Zuckerburg_CVIRGINIA_C.jpg
+             publishedAt
+1   2024-09-18T14:05:48Z
+2   2024-10-01T16:46:43Z
+3   2024-09-24T19:02:18Z
+4   2024-09-16T12:00:32Z
+5   2024-10-10T23:01:41Z
+6   2024-10-08T07:27:21Z
+7   2024-09-18T00:02:58Z
+8   2024-09-17T15:52:25Z
+9   2024-09-16T17:55:09Z
+10  2024-09-25T19:00:41Z
+11  2024-10-15T21:03:11Z
+12  2024-10-09T19:29:33Z
+13  2024-09-16T18:21:03Z
+14  2024-09-18T11:15:37Z
+15  2024-09-20T11:30:33Z
+16  2024-09-20T12:00:50Z
+17  2024-09-19T13:00:02Z
+18  2024-10-01T16:00:43Z
+19  2024-10-07T12:18:48Z
+20  2024-09-20T12:30:37Z
+21  2024-09-22T21:39:11Z
+22  2024-09-16T17:14:44Z
+23  2024-10-07T19:52:40Z
+24  2024-10-08T09:12:40Z
+25  2024-10-08T14:51:02Z
+26  2024-10-15T19:22:59Z
+27  2024-09-16T15:15:49Z
+28  2024-10-08T19:39:02Z
+29  2024-09-27T13:00:03Z
+30  2024-10-03T19:00:39Z
+31  2024-10-04T13:25:06Z
+32  2024-09-19T11:15:35Z
+33  2024-10-04T12:30:47Z
+34  2024-10-09T12:00:03Z
+35  2024-09-29T17:15:27Z
+36  2024-09-30T14:28:47Z
+37  2024-10-15T16:10:25Z
+38  2024-09-20T11:15:59Z
+39  2024-10-04T19:30:14Z
+40  2024-10-09T13:49:55Z
+41  2024-10-09T16:40:13Z
+42  2024-10-15T20:57:31Z
+43  2024-09-26T20:30:08Z
+44  2024-09-19T15:15:20Z
+45  2024-09-25T17:58:38Z
+46  2024-10-08T07:00:37Z
+47  2024-10-03T17:54:46Z
+48  2024-09-25T11:15:28Z
+49  2024-10-08T17:23:42Z
+50  2024-10-04T13:45:59Z
+51  2024-10-04T17:33:41Z
+52  2024-10-08T11:16:30Z
+53  2024-10-08T15:48:46Z
+54  2024-09-16T12:30:49Z
+55  2024-10-02T19:21:11Z
+56  2024-10-07T16:51:37Z
+57  2024-10-04T18:49:04Z
+58  2024-10-16T09:00:38Z
+59  2024-09-30T17:16:42Z
+60  2024-09-24T17:45:50Z
+61  2024-10-01T16:00:45Z
+62  2024-09-24T14:14:47Z
+63  2024-10-04T07:00:38Z
+64  2024-10-08T20:24:26Z
+65  2024-10-09T21:45:48Z
+66  2024-10-15T11:39:48Z
+67  2024-10-04T11:30:26Z
+68  2024-10-01T17:30:24Z
+69  2024-10-03T16:00:37Z
+70  2024-10-14T13:00:13Z
+71  2024-09-18T12:00:00Z
+72  2024-09-23T17:27:00Z
+73  2024-10-09T08:10:56Z
+74  2024-09-28T13:31:00Z
+75  2024-09-20T20:44:59Z
+76  2024-09-20T08:00:00Z
+77  2024-09-28T11:21:00Z
+78  2024-10-07T15:31:01Z
+79  2024-09-21T10:30:00Z
+80  2024-10-15T11:00:00Z
+81  2024-09-16T15:52:52Z
+82  2024-09-24T21:56:08Z
+83  2024-09-19T12:00:00Z
+84  2024-09-28T10:00:00Z
+85  2024-10-04T06:00:00Z
+86  2024-10-09T20:20:17Z
+87  2024-10-01T21:01:28Z
+88  2024-09-18T00:02:12Z
+89  2024-09-18T18:04:20Z
+90  2024-09-25T11:00:00Z
+91  2024-09-20T10:57:06Z
+92  2024-09-24T16:01:39Z
+93  2024-10-10T21:56:13Z
+94  2024-09-24T17:25:09Z
+95  2024-10-09T19:20:47Z
+96  2024-09-18T14:55:26Z
+97  2024-09-17T08:00:00Z
+98  2024-09-30T11:00:00Z
+99  2024-10-11T15:03:33Z
+100 2024-09-25T18:40:00Z
+                                                                                                                                                                                                                         content
+1                                                                                                                                                                                                                      [Removed]
+2                                                                                                                                                                                                                      [Removed]
+3          If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+4                                                                                                                                                                                                                      [Removed]
+5                                                                                                                                                                                                                      [Removed]
+6                                                                                                                                                                                                                      [Removed]
+7          If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+8          If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+9          If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+10         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+11         If you click 'Accept all', we and our partners, including 238 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+12         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+13         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+14                                                                                                                                                                                                                     [Removed]
+15         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+16                                                                                                                                                                                                                     [Removed]
+17         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+18         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+19         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+20         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+21         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+22         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+23                                                                                                                                                                                                                     [Removed]
+24                                                                                                                                                                                                                     [Removed]
+25         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+26                                                                                                                                                                                                                     [Removed]
+27                                                                                                                                                                                                                     [Removed]
+28                                                                                                                                                                                                                     [Removed]
+29         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+30                                                                                                                                                                                                                     [Removed]
+31                                                                                                                                                                                                                     [Removed]
+32         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+33                                                                                                                                                                                                                     [Removed]
+34                                                                                                                                                                                                                     [Removed]
+35                                                                                                                                                                                                                     [Removed]
+36         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+37         If you click 'Accept all', we and our partners, including 238 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+38         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+39                                                                                                                                                                                                                     [Removed]
+40                                                                                                                                                                                                                     [Removed]
+41                                                                                                                                                                                                                     [Removed]
+42                                                                                                                                                                                                                     [Removed]
+43         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+44                                                                                                                                                                                                                     [Removed]
+45                                                                                                                                                                                                                     [Removed]
+46                                                                                                                                                                                                                     [Removed]
+47         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+48                                                                                                                                                                                                                     [Removed]
+49                                                                                                                                                                                                                     [Removed]
+50         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+51         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+52         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+53         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+54         If you click 'Accept all', we and our partners, including 239 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+55         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+56         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+57         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+58                                                                                                                                                                                                                     [Removed]
+59                                                                                                                                                                                                                     [Removed]
+60                                                                                                                                                                                                                     [Removed]
+61                                                                                                                                                                                                                     [Removed]
+62         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+63         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+64                                                                                                                                                                                                                     [Removed]
+65                                                                                                                                                                                                                     [Removed]
+66         If you click 'Accept all', we and our partners, including 238 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+67         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+68         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+69         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+70         If you click 'Accept all', we and our partners, including 240 who are part of the IAB Transparency &amp;amp; Consent Framework, will also store and/or access information on a device (in other words, use … [+678 chars]
+71        Creating summaries seems to be a thing everyone wants to do with AI, and Apple Intelligence is ready to do the same. You can have your emails summarized, messages summarized, and even your notificati… [+2595 chars]
+72        In recent years, Apple started giving the iPhone Pro models a significant chip upgrade to increase the performance gap between the phones, but this year they're all on the same starting point: the A1… [+2907 chars]
+73       if you're in the market for a laptop but want to spend money wisely, you're in luck. Amazon's Prime Day deals end today, October 9, and you'll find a number of our favorite laptops on sale. Not sure … [+10213 chars]
+74        Basically every major product category has seen massive inflation over the past decade. Every category, that is, except TVs. For some reason, year in and year out, brands compete not only to make the… [+2116 chars]
+75      There are so many cases. Here are other ones I've tried that I don't like as much as the picks above but might be suitable for you.\r\nCasely Bold ($35) and Classic Cases for $25: I like the Casely Cla… [+7124 chars]
+76        If the past five years of EU tech rules could take human form, they would embody Thierry Breton. The bombastic commissioner, with his swoop of white hair, became the public face of Brussels irritatio… [+2819 chars]
+77       Another Amazon Prime Day event is set to run on October 8 and 9, but you dont have to wait another week to bag a bargain. After trawling the worlds favorite online store, aisle by digital aisle, weve… [+13331 chars]
+78       Another Amazon Prime Day event will start tomorrow and run through midnight Wednesday, but you dont have to wait another week to bag a bargain. After trawling the worlds favorite online store, aisle … [+16250 chars]
+79        The week was dominated by news that thousands of pagers, walkie-talkies and other devices were exploding across Lebanon on Tuesday and Wednesday in an attack targeting the militant group Hezbollah. A… [+6624 chars]
+80        For a while now, companies like OpenAI and Google have been touting advanced "reasoning" capabilities as the next big step in their latest artificial intelligence models. Now, though, a new study fro… [+4477 chars]
+81        Apples latest iPhone software update, iOS 18, arrives today and includes a new app: Passwords. For the first time, Apple is taking your phones ability to save login details and putting them in a stan… [+2932 chars]
+82        If you break the Google Pixel Watchwhether the first-generation smartwatch from 2022 or the latest model launched earlier this monththere is no way to repair it through official channels. Instead, if… [+3553 chars]
+83        One surefire way to go viral on Threadsthe Meta-owned Instagram-spinoff social network with more than 200 million usersis to ask a ridiculous question that enrages your followers so much, they just h… [+2114 chars]
+84        At this point, phrases like ambient computing, ubiquitous computing, and even (shudder) Internet of Things may be zipping and popping around your brain. Are we back here again? If the answer is yes, … [+3454 chars]
+85        Tsai didnt mention Pinduoduo by name, but from its beginnings, the shopping platform has never made the merchant its focus like Alibaba did: It has always prioritized getting the user the lowest pric… [+2983 chars]
+86        amazon's prime day deals event is coming to a close, but there are still thousands of deals out there. If you're not looking to spend a ton of money, but still want to take advantage of the sale, we'… [+9008 chars]
+87    The next iPhone SE may lose the home button, add Face ID and Apple Intelligence\r\nThe next iPhone SE may lose the home button, add Face ID and Apple Intelligence\r\n / Apple will announce its next budge… [+1334 chars]
+88  Youll be able to use an iPhone to wirelessly restore an iPhone 16\r\nYoull be able to use an iPhone to wirelessly restore an iPhone 16\r\n / Could be a handy way to fix your iPhone in a pinch.\r\nByJay Pet… [+1096 chars]
+89    HTC announces the Vive Focus Vision with color passthrough and an eye on gaming\r\nHTC announces the Vive Focus Vision with color passthrough and an eye on gaming\r\n / HTCs latest Focus VR headset targe… [+3113 chars]
+90      watchOS 11 is nowhere near as flashy as Apple Intelligence, but its full of neat little moments.\r\nByVictoria Song, a senior reporter focusing on wearables, health tech, and more with 12 years of expe… [+5428 chars]
+91   The two new proceedings are meant to “assist Apple in complying with its interoperability,” according to the EU. | Cath Virginia / The Verge\r\n\n \n\n The European Commission has opened new proceedings u… [+2854 chars]
+92  Dont ever hand your phone to the cops\r\nDont ever hand your phone to the cops\r\n / Digital IDs make it tempting to leave your drivers license at home but thats a dangerous risk.\r\nByGaby Del Valle, a po… [+5227 chars]
+93    Image: Ticketmaster\r\n\n \n\n Ticketmaster announced today that it will be the first ticketing company to use Apple’s upgraded Apple Wallet tickets for iOS 18. With the improved tickets, you’ll be able t… [+751 chars]
+94    Figmas AI-powered app generator is back after it was pulled for copying Apple\r\nFigmas AI-powered app generator is back after it was pulled for copying Apple\r\n / The Make Designs tool is relaunching a… [+2137 chars]
+95    Apples Vision Pro leader, Dan Riccio, is retiring\r\nApples Vision Pro leader, Dan Riccio, is retiring\r\n / Dan Riccio transitioned from being Apples SVP of hardware engineering in 2021 to take over a n… [+1027 chars]
+96  With visionOS 2, Apples Vision Pro comes into focus\r\nWith visionOS 2, Apples Vision Pro comes into focus\r\n / The Vision Pro got a slew of much-needed updates in its new OS update.\r\nByWes Davis, a wee… [+5561 chars]
+97    Setapp Mobiles open beta adds more apps for European iPhone users\r\nSetapp Mobiles open beta adds more apps for European iPhone users\r\n / You dont need an invite to download MacPaws alternative iOS ap… [+2056 chars]
+98  Epic is suing Google again and now Samsung too\r\nEpic is suing Google again and now Samsung too\r\n / Tim Sweeney claims theyre colluding to keep new app stores off Samsung phones.\r\nBySean Hollister, a … [+6824 chars]
+99    The Beats Pill speaker is even cheaper than it was during Prime Day\r\nThe Beats Pill speaker is even cheaper than it was during Prime Day\r\n / Plus, you can save $66 on a Fire TV Stick 4K Max Game Pass… [+3874 chars]
+100  Image: Cath Virginia / The Verge; Getty Images\r\n\n \n\n Meta CEO Mark Zuckerberg is pushing back on the idea that social media directly harms teen mental health. During an interview with The Verge’s Ale… [+3922 chars]</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Coercing first column to be a list column</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>first_list_column <span class="ot">&lt;-</span> <span class="fu">map</span>(first_article<span class="sc">$</span>source, as.list)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>first_list_column</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$id
+$id[[1]]
+[1] NA
+
+$id[[2]]
+[1] NA
+
+$id[[3]]
+[1] NA
+
+$id[[4]]
+[1] NA
+
+$id[[5]]
+[1] NA
+
+$id[[6]]
+[1] NA
+
+$id[[7]]
+[1] NA
+
+$id[[8]]
+[1] NA
+
+$id[[9]]
+[1] NA
+
+$id[[10]]
+[1] NA
+
+$id[[11]]
+[1] NA
+
+$id[[12]]
+[1] NA
+
+$id[[13]]
+[1] NA
+
+$id[[14]]
+[1] NA
+
+$id[[15]]
+[1] NA
+
+$id[[16]]
+[1] NA
+
+$id[[17]]
+[1] NA
+
+$id[[18]]
+[1] NA
+
+$id[[19]]
+[1] NA
+
+$id[[20]]
+[1] NA
+
+$id[[21]]
+[1] NA
+
+$id[[22]]
+[1] NA
+
+$id[[23]]
+[1] NA
+
+$id[[24]]
+[1] NA
+
+$id[[25]]
+[1] NA
+
+$id[[26]]
+[1] NA
+
+$id[[27]]
+[1] NA
+
+$id[[28]]
+[1] NA
+
+$id[[29]]
+[1] NA
+
+$id[[30]]
+[1] NA
+
+$id[[31]]
+[1] NA
+
+$id[[32]]
+[1] NA
+
+$id[[33]]
+[1] NA
+
+$id[[34]]
+[1] NA
+
+$id[[35]]
+[1] NA
+
+$id[[36]]
+[1] NA
+
+$id[[37]]
+[1] NA
+
+$id[[38]]
+[1] NA
+
+$id[[39]]
+[1] NA
+
+$id[[40]]
+[1] NA
+
+$id[[41]]
+[1] NA
+
+$id[[42]]
+[1] NA
+
+$id[[43]]
+[1] NA
+
+$id[[44]]
+[1] NA
+
+$id[[45]]
+[1] NA
+
+$id[[46]]
+[1] NA
+
+$id[[47]]
+[1] NA
+
+$id[[48]]
+[1] NA
+
+$id[[49]]
+[1] NA
+
+$id[[50]]
+[1] NA
+
+$id[[51]]
+[1] NA
+
+$id[[52]]
+[1] NA
+
+$id[[53]]
+[1] NA
+
+$id[[54]]
+[1] NA
+
+$id[[55]]
+[1] NA
+
+$id[[56]]
+[1] NA
+
+$id[[57]]
+[1] NA
+
+$id[[58]]
+[1] NA
+
+$id[[59]]
+[1] NA
+
+$id[[60]]
+[1] NA
+
+$id[[61]]
+[1] NA
+
+$id[[62]]
+[1] NA
+
+$id[[63]]
+[1] NA
+
+$id[[64]]
+[1] NA
+
+$id[[65]]
+[1] NA
+
+$id[[66]]
+[1] NA
+
+$id[[67]]
+[1] NA
+
+$id[[68]]
+[1] NA
+
+$id[[69]]
+[1] NA
+
+$id[[70]]
+[1] NA
+
+$id[[71]]
+[1] "wired"
+
+$id[[72]]
+[1] "wired"
+
+$id[[73]]
+[1] "wired"
+
+$id[[74]]
+[1] "wired"
+
+$id[[75]]
+[1] "wired"
+
+$id[[76]]
+[1] "wired"
+
+$id[[77]]
+[1] "wired"
+
+$id[[78]]
+[1] "wired"
+
+$id[[79]]
+[1] "wired"
+
+$id[[80]]
+[1] "wired"
+
+$id[[81]]
+[1] "wired"
+
+$id[[82]]
+[1] "wired"
+
+$id[[83]]
+[1] "wired"
+
+$id[[84]]
+[1] "wired"
+
+$id[[85]]
+[1] "wired"
+
+$id[[86]]
+[1] "wired"
+
+$id[[87]]
+[1] "the-verge"
+
+$id[[88]]
+[1] "the-verge"
+
+$id[[89]]
+[1] "the-verge"
+
+$id[[90]]
+[1] "the-verge"
+
+$id[[91]]
+[1] "the-verge"
+
+$id[[92]]
+[1] "the-verge"
+
+$id[[93]]
+[1] "the-verge"
+
+$id[[94]]
+[1] "the-verge"
+
+$id[[95]]
+[1] "the-verge"
+
+$id[[96]]
+[1] "the-verge"
+
+$id[[97]]
+[1] "the-verge"
+
+$id[[98]]
+[1] "the-verge"
+
+$id[[99]]
+[1] "the-verge"
+
+$id[[100]]
+[1] "the-verge"
+
+
+$name
+$name[[1]]
+[1] "[Removed]"
+
+$name[[2]]
+[1] "[Removed]"
+
+$name[[3]]
+[1] "Yahoo Entertainment"
+
+$name[[4]]
+[1] "[Removed]"
+
+$name[[5]]
+[1] "[Removed]"
+
+$name[[6]]
+[1] "[Removed]"
+
+$name[[7]]
+[1] "Yahoo Entertainment"
+
+$name[[8]]
+[1] "Yahoo Entertainment"
+
+$name[[9]]
+[1] "Yahoo Entertainment"
+
+$name[[10]]
+[1] "Yahoo Entertainment"
+
+$name[[11]]
+[1] "Yahoo Entertainment"
+
+$name[[12]]
+[1] "Yahoo Entertainment"
+
+$name[[13]]
+[1] "Yahoo Entertainment"
+
+$name[[14]]
+[1] "[Removed]"
+
+$name[[15]]
+[1] "Yahoo Entertainment"
+
+$name[[16]]
+[1] "[Removed]"
+
+$name[[17]]
+[1] "Yahoo Entertainment"
+
+$name[[18]]
+[1] "Yahoo Entertainment"
+
+$name[[19]]
+[1] "Yahoo Entertainment"
+
+$name[[20]]
+[1] "Yahoo Entertainment"
+
+$name[[21]]
+[1] "Yahoo Entertainment"
+
+$name[[22]]
+[1] "Yahoo Entertainment"
+
+$name[[23]]
+[1] "[Removed]"
+
+$name[[24]]
+[1] "[Removed]"
+
+$name[[25]]
+[1] "Yahoo Entertainment"
+
+$name[[26]]
+[1] "[Removed]"
+
+$name[[27]]
+[1] "[Removed]"
+
+$name[[28]]
+[1] "[Removed]"
+
+$name[[29]]
+[1] "Yahoo Entertainment"
+
+$name[[30]]
+[1] "[Removed]"
+
+$name[[31]]
+[1] "[Removed]"
+
+$name[[32]]
+[1] "Yahoo Entertainment"
+
+$name[[33]]
+[1] "[Removed]"
+
+$name[[34]]
+[1] "[Removed]"
+
+$name[[35]]
+[1] "[Removed]"
+
+$name[[36]]
+[1] "Yahoo Entertainment"
+
+$name[[37]]
+[1] "Yahoo Entertainment"
+
+$name[[38]]
+[1] "Yahoo Entertainment"
+
+$name[[39]]
+[1] "[Removed]"
+
+$name[[40]]
+[1] "[Removed]"
+
+$name[[41]]
+[1] "[Removed]"
+
+$name[[42]]
+[1] "[Removed]"
+
+$name[[43]]
+[1] "Yahoo Entertainment"
+
+$name[[44]]
+[1] "[Removed]"
+
+$name[[45]]
+[1] "[Removed]"
+
+$name[[46]]
+[1] "[Removed]"
+
+$name[[47]]
+[1] "Yahoo Entertainment"
+
+$name[[48]]
+[1] "[Removed]"
+
+$name[[49]]
+[1] "[Removed]"
+
+$name[[50]]
+[1] "Yahoo Entertainment"
+
+$name[[51]]
+[1] "Yahoo Entertainment"
+
+$name[[52]]
+[1] "Yahoo Entertainment"
+
+$name[[53]]
+[1] "Yahoo Entertainment"
+
+$name[[54]]
+[1] "Yahoo Entertainment"
+
+$name[[55]]
+[1] "Yahoo Entertainment"
+
+$name[[56]]
+[1] "Yahoo Entertainment"
+
+$name[[57]]
+[1] "Yahoo Entertainment"
+
+$name[[58]]
+[1] "[Removed]"
+
+$name[[59]]
+[1] "[Removed]"
+
+$name[[60]]
+[1] "[Removed]"
+
+$name[[61]]
+[1] "[Removed]"
+
+$name[[62]]
+[1] "Yahoo Entertainment"
+
+$name[[63]]
+[1] "Yahoo Entertainment"
+
+$name[[64]]
+[1] "[Removed]"
+
+$name[[65]]
+[1] "[Removed]"
+
+$name[[66]]
+[1] "Yahoo Entertainment"
+
+$name[[67]]
+[1] "Yahoo Entertainment"
+
+$name[[68]]
+[1] "Yahoo Entertainment"
+
+$name[[69]]
+[1] "Yahoo Entertainment"
+
+$name[[70]]
+[1] "Yahoo Entertainment"
+
+$name[[71]]
+[1] "Wired"
+
+$name[[72]]
+[1] "Wired"
+
+$name[[73]]
+[1] "Wired"
+
+$name[[74]]
+[1] "Wired"
+
+$name[[75]]
+[1] "Wired"
+
+$name[[76]]
+[1] "Wired"
+
+$name[[77]]
+[1] "Wired"
+
+$name[[78]]
+[1] "Wired"
+
+$name[[79]]
+[1] "Wired"
+
+$name[[80]]
+[1] "Wired"
+
+$name[[81]]
+[1] "Wired"
+
+$name[[82]]
+[1] "Wired"
+
+$name[[83]]
+[1] "Wired"
+
+$name[[84]]
+[1] "Wired"
+
+$name[[85]]
+[1] "Wired"
+
+$name[[86]]
+[1] "Wired"
+
+$name[[87]]
+[1] "The Verge"
+
+$name[[88]]
+[1] "The Verge"
+
+$name[[89]]
+[1] "The Verge"
+
+$name[[90]]
+[1] "The Verge"
+
+$name[[91]]
+[1] "The Verge"
+
+$name[[92]]
+[1] "The Verge"
+
+$name[[93]]
+[1] "The Verge"
+
+$name[[94]]
+[1] "The Verge"
+
+$name[[95]]
+[1] "The Verge"
+
+$name[[96]]
+[1] "The Verge"
+
+$name[[97]]
+[1] "The Verge"
+
+$name[[98]]
+[1] "The Verge"
+
+$name[[99]]
+[1] "The Verge"
+
+$name[[100]]
+[1] "The Verge"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Checking type of first list column</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(first_list_column)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "list"</code></pre>
+</div>
+</div>
+</section>
+<section id="write-a-quick-function-allowing-the-user-to-easily-query-the-api." class="level4">
+<h4 class="anchored" data-anchor-id="write-a-quick-function-allowing-the-user-to-easily-query-the-api.">3. Write a quick function allowing the user to easily query the API.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating a function to query the API. Set api_key. Used GET. Once obtained information from API, parsed to JSON. Then extracted articles as a tibble to make it easier to read and more concise.</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Load in tibble</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>api_key <span class="ot">=</span> <span class="st">"305402c9d77b4538bf1312bc288e62a1"</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>api_query <span class="ot">&lt;-</span> <span class="cf">function</span>(title, from_time, api_key) {</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  base_url <span class="ot">&lt;-</span> <span class="st">"https://newsapi.org/v2/everything"</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  api_response <span class="ot">&lt;-</span> <span class="fu">GET</span>(<span class="at">url =</span> base_url, <span class="at">query =</span> <span class="fu">list</span>(</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">q =</span> title,</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">from =</span> from_time,</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">sortBy =</span> <span class="st">"publishedAt"</span>,</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">apiKey =</span> api_key))</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>  api_parse <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">rawToChar</span>(api_response<span class="sc">$</span>content))</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>  article <span class="ot">&lt;-</span> api_parse<span class="sc">$</span>article</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">as_tibble</span>(article))</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="use-function-twice-to-grab-data-and-save-each-as-an-object.-then-for-one-object-summarize-the-name-of-the-source-for-each-article." class="level4">
+<h4 class="anchored" data-anchor-id="use-function-twice-to-grab-data-and-save-each-as-an-object.-then-for-one-object-summarize-the-name-of-the-source-for-each-article.">4. Use function twice to grab data and save each as an object. Then for one object, summarize the name of the source for each article.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example 1 query, saved as object, apple1</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>apple1 <span class="ot">&lt;-</span> <span class="fu">api_query</span>(<span class="st">"apple"</span>, <span class="st">"2024-10-01"</span>, api_key)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Example 2 query, saved as pbject, apple2</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>apple2 <span class="ot">&lt;-</span> <span class="fu">api_query</span>(<span class="st">"apple"</span>, <span class="st">"2024-09-24"</span>, api_key)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="co"># For one object, find a one-way contingency table for name of the source</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>summary_source <span class="ot">&lt;-</span> <span class="fu">table</span>(apple2<span class="sc">$</span>source<span class="sc">$</span>name)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>summary_source</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+                 [Removed]                Adactio.com 
+                         3                          1 
+              Adslzone.net               Apfelpage.de 
+                         1                          1 
+            Appgefahren.de             Apple Newsroom 
+                         1                          1 
+            Applesfera.com                   BBC News 
+                         1                          1 
+       Berliner Morgenpost           Business Insider 
+                         1                          1 
+         Business Standard                     Clubic 
+                         1                          1 
+                       CNA                       CNET 
+                         1                          2 
+        Criptonoticias.com                  Curved.de 
+                         1                          1 
+            Europapress.es                Everyeye.it 
+                         1                          4 
+ Everything-everywhere.com               Fast Company 
+                         1                          1 
+                  Feber.se                   Finextra 
+                         2                          1 
+                 Frandroid                Freenews.fr 
+                         1                          1 
+              Gagadget.com              Geeky Gadgets 
+                         1                          1 
+                Getnews.jp                       Giga 
+                         2                          1 
+               Gizchina.gr              Gry-online.pl 
+                         1                          1 
+                 Hdblog.it               heise online 
+                         1                          1 
+              Hwupgrade.it                iGeneration 
+                         2                          1 
+              Imagazine.pl                  InfoQ.com 
+                         2                          1 
+                Interia.pl              Investing.com 
+                         3                          2 
+             Ipadizate.com                   Iphon.fr 
+                         1                          3 
+           Iphoneaddict.fr              Isenacode.com 
+                         1                          1 
+               Ispazio.net           Janefriedman.com 
+                         2                          1 
+           Journal du geek       Letemsvetemapplem.eu 
+                         2                          2 
+       Libertaddigital.com              MacGeneration 
+                         2                          1 
+                  Macworld                    Mail.ru 
+                         1                          1 
+               mobiFlip.de                    N-tv.de 
+                         1                          1 
+       Olhardigital.com.br               Ouest-France 
+                         1                          1 
+           Overclockers.ru Paul Tan's Automotive News 
+                         1                          2 
+    Pausaparafeminices.com                  PCMag.com 
+                         1                          1 
+                PhoneArena             Podcasty.hn.cz 
+                         1                          1 
+                Popbee.com               Quartz India 
+                         1                          2 
+                   road.cc            Shiftdelete.net 
+                         1                          1 
+              Slashdot.org             Slate Magazine 
+                         1                          2 
+              STLtoday.com                        T3n 
+                         1                          2 
+                Taisy0.com            Tecmundo.com.br 
+                         1                          1 
+                  Tjock.se            Tudocelular.com 
+                         1                          2 
+                   Variety                   Wccftech 
+                         1                          1 
+                  Wired.jp                      ZDNet 
+                         1                          1 </code></pre>
+</div>
+</div>
+</section>
+<section id="for-each-returned-data-objects-apple1-and-apple2-turn-publishedat-column-into-a-date-column-using-lubridate-package." class="level4">
+<h4 class="anchored" data-anchor-id="for-each-returned-data-objects-apple1-and-apple2-turn-publishedat-column-into-a-date-column-using-lubridate-package.">5. For each returned data objects (apple1 and apple2), turn publishedAt column into a date column using lubridate package.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load in package</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="co"># apple1 changed publishedAt to date: ymd_hms. Then arranged by published date.</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>apple1 <span class="ot">&lt;-</span> apple1 <span class="sc">%&gt;%</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">publishedAt =</span> <span class="fu">ymd_hms</span>(publishedAt)) <span class="sc">%&gt;%</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(publishedAt)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Added a new column using mutate for object 1, apple1</span></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>apple1_pub <span class="ot">&lt;-</span> apple1 <span class="sc">%&gt;%</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pub_diff =</span> publishedAt <span class="sc">-</span> <span class="fu">lag</span>(publishedAt))</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>apple1_pub</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 100 × 9
+   source$id $name author title description url   urlToImage publishedAt        
+   &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;      &lt;dttm&gt;             
+ 1 &lt;NA&gt;      Paul… Antho… 2024… "Stellanti… http… https://p… 2024-10-16 08:44:27
+ 2 &lt;NA&gt;      Hdbl… HDblo… Nuov… "Dovremo a… http… https://h… 2024-10-16 08:45:00
+ 3 &lt;NA&gt;      road… dave … Zwif… "Great val… http… &lt;NA&gt;       2024-10-16 08:45:00
+ 4 &lt;NA&gt;      Shif… Enes … Moto… "Akıllı te… http… https://a… 2024-10-16 08:45:00
+ 5 &lt;NA&gt;      Vari… Ellis… Gary… "Oscar-win… http… https://v… 2024-10-16 08:45:07
+ 6 &lt;NA&gt;      Paul… Hazri… Leap… "Stellanti… http… https://p… 2024-10-16 08:45:19
+ 7 &lt;NA&gt;      [Rem… &lt;NA&gt;   [Rem… "[Removed]" http… &lt;NA&gt;       2024-10-16 08:46:00
+ 8 &lt;NA&gt;      mobi… Olive… Xiao… "Fitness-R… http… https://w… 2024-10-16 08:46:10
+ 9 &lt;NA&gt;      Ipho… Jean-… Oubl… "Un smartp… http… https://w… 2024-10-16 08:47:04
+10 &lt;NA&gt;      Fran… Hugo … Éter… "Les deux … http… https://i… 2024-10-16 08:47:09
+# ℹ 90 more rows
+# ℹ 2 more variables: content &lt;chr&gt;, pub_diff &lt;drtn&gt;</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># apple2 changed publishedAt to date: ymd_hms. Then arranged by published date.</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>apple2 <span class="ot">&lt;-</span> apple2 <span class="sc">%&gt;%</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">publishedAt =</span> <span class="fu">ymd_hms</span>(publishedAt)) <span class="sc">%&gt;%</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(publishedAt)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Added a new column using mutate for object 2, apple2</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>apple2_pub <span class="ot">&lt;-</span> apple2 <span class="sc">%&gt;%</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pub_diff =</span> publishedAt <span class="sc">-</span> <span class="fu">lag</span>(publishedAt))</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>apple2_pub</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 100 × 9
+   source$id $name author title description url   urlToImage publishedAt        
+   &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;      &lt;dttm&gt;             
+ 1 &lt;NA&gt;      Paul… Antho… 2024… "Stellanti… http… https://p… 2024-10-16 08:44:27
+ 2 &lt;NA&gt;      Hdbl… HDblo… Nuov… "Dovremo a… http… https://h… 2024-10-16 08:45:00
+ 3 &lt;NA&gt;      road… dave … Zwif… "Great val… http… &lt;NA&gt;       2024-10-16 08:45:00
+ 4 &lt;NA&gt;      Shif… Enes … Moto… "Akıllı te… http… https://a… 2024-10-16 08:45:00
+ 5 &lt;NA&gt;      Vari… Ellis… Gary… "Oscar-win… http… https://v… 2024-10-16 08:45:07
+ 6 &lt;NA&gt;      Paul… Hazri… Leap… "Stellanti… http… https://p… 2024-10-16 08:45:19
+ 7 &lt;NA&gt;      [Rem… &lt;NA&gt;   [Rem… "[Removed]" http… &lt;NA&gt;       2024-10-16 08:46:00
+ 8 &lt;NA&gt;      mobi… Olive… Xiao… "Fitness-R… http… https://w… 2024-10-16 08:46:10
+ 9 &lt;NA&gt;      Ipho… Jean-… Oubl… "Un smartp… http… https://w… 2024-10-16 08:47:04
+10 &lt;NA&gt;      Fran… Hugo … Éter… "Les deux … http… https://i… 2024-10-16 08:47:09
+# ℹ 90 more rows
+# ℹ 2 more variables: content &lt;chr&gt;, pub_diff &lt;drtn&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="for-one-data-frame-subset-the-data-frame-to-only-return-the-date-version-of-publishedat-and-the-pub_diff-variables." class="level4">
+<h4 class="anchored" data-anchor-id="for-one-data-frame-subset-the-data-frame-to-only-return-the-date-version-of-publishedat-and-the-pub_diff-variables.">6. For one data frame, subset the data frame to only return the date version of publishedAt and the pub_diff variables.</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Taking data frame, apple1, we will subset and only select two columns, publishedAt and pub_diff</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>apple1_subset <span class="ot">&lt;-</span> apple1_pub <span class="sc">%&gt;%</span> </span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(publishedAt, pub_diff)</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>apple1_subset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 100 × 2
+   publishedAt         pub_diff
+   &lt;dttm&gt;              &lt;drtn&gt;  
+ 1 2024-10-16 08:44:27 NA secs 
+ 2 2024-10-16 08:45:00 33 secs 
+ 3 2024-10-16 08:45:00  0 secs 
+ 4 2024-10-16 08:45:00  0 secs 
+ 5 2024-10-16 08:45:07  7 secs 
+ 6 2024-10-16 08:45:19 12 secs 
+ 7 2024-10-16 08:46:00 41 secs 
+ 8 2024-10-16 08:46:10 10 secs 
+ 9 2024-10-16 08:47:04 54 secs 
+10 2024-10-16 08:47:09  5 secs 
+# ℹ 90 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Now we'll take this same data frame, apple1_sub and use the map(function) to return the mean, sd, and median of these two columns.</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>apple1_subset_summary <span class="ot">&lt;-</span> <span class="fu">map</span>(apple1_subset, <span class="sc">~</span><span class="fu">c</span>(</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mean =</span> <span class="fu">mean</span>(.x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">sd =</span> <span class="fu">sd</span>(.x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">median =</span> <span class="fu">median</span>(.x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>apple1_subset_summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$publishedAt
+                     mean                        sd                    median 
+"2024-10-16 09:11:52 UTC" "1970-01-01 00:17:22 UTC" "2024-10-16 09:10:45 UTC" 
+
+$pub_diff
+Time differences in secs
+    mean       sd   median 
+35.48485 44.05246 17.00000 </code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

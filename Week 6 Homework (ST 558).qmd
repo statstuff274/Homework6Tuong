@@ -1,0 +1,313 @@
+---
+title: "Week 6 - Conceptual Questions/Writing R Functions/API Query"
+author: "John Tuong"
+format: html
+editor: visual
+execute: 
+  warning: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# Install and load packages
+# install.packages("httr")
+# install.packages("jsonlite")
+# install.packages("purrr")
+library(tidyverse)
+```
+
+
+## Task 1: Conceptual Questions
+
+
+#### 1. What is the purpose of the lapply() function? What is the equivalent purrr function?
+
+> The purpose of the lapply() function is to apply a function over a list or vector, hence the "l" in lapply(), while returning a list of the same length where each element is a result from a function being applied to it. Notes - To further explain, apply() is to apply a function over something that's homogenous, this is where the speed comes from. Help R states that lapply "returns a list of the same length as x, each element of which is the result of applying FUN to the corresponding element of x."
+
+> The equivalent purrr function of lapply() is map(). Notes - the purrr package provides a tidyverse alternative to the apply() family. The main advantage here is more/greater consistency between functions and the addition of some helper functions. Hadley states that while using purrr, there's less friction and greater ease while writing functional code.
+
+#### 2. Suppose we have a list called my_list. Each element of the list is a numeric data frame (all columns are numeric). We want use lapply() to run the code cor(numeric_matrix, method = "kendall") on each element of the list. Write code to do this below! (I’m really trying to ask you how you specify method = "kendall" when calling lapply()).
+
+> The code would be the following: lapply(my_list, FUN = function(x) cor(x, method = "kendall")) Explanation: lapply() will apply a function over a list and return that list, my_list indicates the list, FUN = function(x) indicates that we're going to create a function and pass its name to the FUN argument and cor(x, method = "kendall") is how we would specify "kendell" when calling lapply().
+
+#### 3. What are the two advantages of using purrr functions instead of the BaseR apply family?
+
+> Two advantages of using purrr functions over the BaseR apply family is: one, the *purrr functions have helpers* for writing compact code for common special cases, and two, there is *much greater consistency between the functions*. An example for the second advantage is, lapply() and mapply() both come from the BaseR family, however, for lapply, the first argument is the data and for mapply() the first argument is the function... as for the map functions in purrr, the first argument is *always* the data.
+
+#### 4. What is a side-effect function?
+
+> A side-effect function (is like print, write_csv(), plot(), etc.) is a function where it doesn't try to change the data but just tries to produce something. It changes the state of something. For example, print(), prints something to the console, write_csv is creating a new file somewhere, plot() is creating a plot output somewhere. It's **not** transforming the data, it's just trying to produce something different.
+
+#### 5. Why can you name a variable sd in a function and not cause any issues with the sd function?
+
+> This is because of the environments and lexical scoping, as well as how a function works. Lexical scoping (aka static scoping) refers to setting the scope/range of functionality, of a variable so that it can be called/referenced from within the block of code in which it's defined... So, when you call a function, it creates temporary function environments (function scope). In these temporary function environments, variables in functions don't overwite things. So even though you're assigning a variable "sd" within a function, it doesn't cause any issues with the actual sd function because it's being assigned in a temporary function environment. This is why you can have the same name in a function and in your global environment, *your variable in your function won't override the global function* making it not cause any issues with the sd function.
+
+
+## Task 2: Writing R Functions
+
+
+#### 1. Write a basic function (call it getRMSE()) that takes in a vector of responses and a vector of predictions and outputs the RMSE. AND if a value is missing, allow for additional arguments to the mean() function that removes the NA values in the computation.
+
+```{r}
+# Creating the getRSME function. Use resp and pred from #2 below. Ellipses must be passed down from arguments into the function, so this allowed for additional arguments to the mean() function.
+getRMSE <- function(resp, pred,...) {
+  sqrt(mean((resp - pred)^2,...))
+}
+```
+
+
+#### 2. Run the code (given below) and test RMSE function using this data.
+
+```{r}
+# Code ran and taken from HW 6 to create response values and predictions.
+set.seed(10)
+n <- 100
+x <- runif(n)
+resp <- 3 + 10 * x + rnorm(n)
+pred <- predict(lm(resp ~ x), data.frame(x))
+
+#Test RMSE function here.
+RSMEtest <- getRMSE(resp, pred)
+RSMEtest
+```
+> When testing the RMSE function, 0.958 is returned.
+
+```{r}
+# Replacing two of the response values with missing values (NA_real_)... others include: NA, NA_integer_, NA_complex_, NA_character_, and NaN.
+resp[1:2] <- NA_real_
+
+#Test RMSE function here to deal WITH missing values. Since we're using na.rm to deal with the missing values, a valid RMSE value will be returned. 
+deal_with <- getRMSE(resp, pred, na.rm = TRUE)
+deal_with
+
+#Test RMSE function here WITHOUT dealing with missing values; NA will be returned.
+deal_without <- getRMSE(resp, pred)
+deal_without
+```
+
+
+#### 3. Write a function called getMAE() that follows the specifications of the getRMSE() function.
+
+```{r}
+# Wrote function getMAE, following specifications of getRMSE() function.
+getMAE <- function(resp, pred,...) {
+  mean(abs(resp - pred),...)
+}
+```
+
+
+#### 4. Run the code and test MAE function.
+
+```{r}
+# Ran code from HW 6 to reset previous resp values.
+set.seed(10)
+n <- 100
+x <- runif(n)
+resp <- 3 + 10 * x + rnorm(n)
+pred <- predict(lm(resp ~ x), data.frame(x))
+
+# Testing MAE function.
+MAEtest <- getMAE(resp, pred)
+MAEtest
+```
+
+> When testing the MAE function, we get ~0.816
+
+```{r}
+# Replacing two of the response values with missing values (NA_real_)..
+resp[1:2] <- NA_real_
+
+#Test RMSE function here to deal WITH missing values. Since we're using na.rm to deal with the missing values, a valid MAE value will be returned. 
+deal_with_MAE <- getMAE(resp, pred, na.rm = TRUE)
+deal_with_MAE
+
+#Test RMSE function here WITHOUT dealing with missing values; NA will be returned.
+deal_without_MAE <- getMAE(resp, pred)
+deal_without_MAE
+```
+
+
+#### 5. Create a wrapper function that can be used to get either or both metrics returned with a single function call.
+
+```{r}
+# Creating a wrapper function to return either or both metrics. Metrics is passed as a vector so it can be found as character strings and will return both metrics by default and include names. Function will also check if two numeric vectors have passed through. If not, then message will print. After the one or two vectors are confirmed, they will be initialized into a list. The respective "metric" will be calculated based on the functions we made earlier.
+wrapped_metrics <- function(resp, pred, metrics = c("RMSE", "MAE")) {
+  if (!is.numeric(resp) || !is.numeric(pred) || !is.atomic(resp) || !is.atomic(pred)) {
+    stop("Vector(s) are not valid. Please try again and ensure vector(s) are numeric.")  
+  }
+  
+  results <- list()
+  
+  if ("RMSE" %in% metrics) {
+    results$RMSE <- getRMSE(resp, pred, na.rm = TRUE)
+  }
+  
+  if ("MAE" %in% metrics) {
+    results$MAE <- getMAE(resp, pred, na.rm = TRUE)
+  }
+  
+  return(results)
+} 
+```
+
+##### 6. Run following code to create some response values and predictions. 
+
+```{r}
+# Reran code to start fresh.
+set.seed(10)
+n <- 100
+x <- runif(n)
+resp <- 3 + 10 * x + rnorm(n)
+pred <- predict(lm(resp ~ x), data.frame(x))
+
+# Testing new function.
+wrappedtest <- wrapped_metrics(resp, pred)
+wrappedtest
+
+# Calling for metric "RMSE"
+wrappedtest_RMSE <- wrapped_metrics(resp, pred, "RMSE")
+wrappedtest_RMSE
+```
+
+```{r}
+# Calling for metric "MAE"
+wrappedtest_MAE <- wrapped_metrics(resp, pred, "MAE")
+wrappedtest_MAE
+```
+
+```{r}
+# Calling for both metrics
+wrappedtest_both <- wrapped_metrics(resp, pred)
+wrappedtest_both
+```
+```{r}
+# Repeat with replacing two response values with missing values.
+resp[1:2] <- NA_real_
+
+# With two missing values, you see that these values below are different from the values above.
+wrapped_metrics(resp,pred)
+```
+```{r}
+# Testing function with incorrect data. As seen below, once the function coerces the response vector to become a data frame, the function no longer took it because it wasn't numeric.
+# incorrect_test <- wrapped_metrics(data.frame(resp), pred)
+# incorrect_test
+
+# I wanted to mention that I did try to pass incorrect code in the above function as you can see, and it did respond back: "Error in wrapped_metrics(data.frame(resp), pred): Vector(s) are not valid. Please try again and ensure vector(s) are numeric." However, when I rendered it, it kept halting execution from lines 193-197.
+```
+
+## Task 3 - Querying an API and a Tidy-Style Function
+
+#### 1/2. Use GET() from the httr package to return info about a topic. Then parse and check contents. Use plunk() to grab articles element. First column should be a list.
+
+```{r}
+# Load packages
+library(httr)
+library(jsonlite)
+library(purrr)
+
+# Signed up for and obtained API key: 305402c9d77b4538bf1312bc288e62a1
+
+# API call and parse about Apple
+return_url <- "https://newsapi.org/v2/everything?q=apple&sortBy=popularity&apiKey=305402c9d77b4538bf1312bc288e62a1"
+initial_response <- GET(url = return_url)
+initial_parse <- fromJSON(rawToChar(initial_response$content))
+
+# Used pluck() to grab
+first_article <- pluck(initial_parse, "articles")
+first_article
+
+# Coercing first column to be a list column
+first_list_column <- map(first_article$source, as.list)
+first_list_column
+
+# Checking type of first list column
+class(first_list_column)
+```
+
+#### 3. Write a quick function allowing the user to easily query the API.
+
+```{r}
+# Creating a function to query the API. Set api_key. Used GET. Once obtained information from API, parsed to JSON. Then extracted articles as a tibble to make it easier to read and more concise.
+# Load in tibble
+library(tibble)
+api_key = "305402c9d77b4538bf1312bc288e62a1"
+api_query <- function(title, from_time, api_key) {
+  base_url <- "https://newsapi.org/v2/everything"
+  api_response <- GET(url = base_url, query = list(
+    q = title,
+    from = from_time,
+    sortBy = "publishedAt",
+    apiKey = api_key))
+  api_parse <- fromJSON(rawToChar(api_response$content))
+  article <- api_parse$article
+  return(as_tibble(article))
+}
+```
+
+#### 4. Use function twice to grab data and save each as an object. Then for one object, summarize the name of the source for each article.
+
+```{r}
+# Example 1 query, saved as object, apple1
+apple1 <- api_query("apple", "2024-10-01", api_key)
+
+# Example 2 query, saved as pbject, apple2
+apple2 <- api_query("apple", "2024-09-24", api_key)
+
+# For one object, find a one-way contingency table for name of the source
+summary_source <- table(apple2$source$name)
+summary_source
+```
+
+#### 5. For each returned data objects (apple1 and apple2), turn publishedAt column into a date column using lubridate package.
+
+```{r}
+# Load in package
+library(lubridate)
+library(dplyr)
+
+# apple1 changed publishedAt to date: ymd_hms. Then arranged by published date.
+apple1 <- apple1 %>%
+  mutate(publishedAt = ymd_hms(publishedAt)) %>%
+  arrange(publishedAt)
+
+# Added a new column using mutate for object 1, apple1
+apple1_pub <- apple1 %>%
+  mutate(pub_diff = publishedAt - lag(publishedAt))
+apple1_pub
+
+# apple2 changed publishedAt to date: ymd_hms. Then arranged by published date.
+apple2 <- apple2 %>%
+  mutate(publishedAt = ymd_hms(publishedAt)) %>%
+  arrange(publishedAt)
+
+# Added a new column using mutate for object 2, apple2
+apple2_pub <- apple2 %>%
+  mutate(pub_diff = publishedAt - lag(publishedAt))
+apple2_pub
+```
+
+#### 6. For one data frame, subset the data frame to only return the date version of publishedAt and the pub_diff variables.
+
+```{r}
+# Taking data frame, apple1, we will subset and only select two columns, publishedAt and pub_diff
+
+apple1_subset <- apple1_pub %>% 
+  select(publishedAt, pub_diff)
+apple1_subset
+```
+
+```{r}
+# Now we'll take this same data frame, apple1_sub and use the map(function) to return the mean, sd, and median of these two columns.
+
+apple1_subset_summary <- map(apple1_subset, ~c(
+  mean = mean(.x, na.rm = TRUE),
+  sd = sd(.x, na.rm = TRUE),
+  median = median(.x, na.rm = TRUE)
+))
+apple1_subset_summary
+```
+
+
+
+
